@@ -1,0 +1,686 @@
+import React, { useState, useEffect } from 'react';
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
+import { getFirestore, doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
+
+// Tailwind CSS is assumed to be available.
+// lucide-react icons can be used for a modern look.
+import { Plus, Disc, User, Music, Gauge, Tag, ListFilter, Edit, Trash2, XCircle } from 'lucide-react';
+
+const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : '';
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+// Initialize Firebase App
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// Helper function to create a UUID
+const generateUUID = () => {
+  return crypto.randomUUID();
+};
+
+// Main App Component
+const App = () => {
+    const [userId, setUserId] = useState(null);
+    const [isAuthReady, setIsAuthReady] = useState(false);
+    const [editingSongId, setEditingSongId] = useState(null);
+
+    // State for tags
+    const [categories, setCategories] = useState([]);
+    const [difficulties, setDifficulties] = useState([]);
+    const [prices, setPrices] = useState([]);
+    const [practices, setPractices] = useState([]);
+
+    // State for new tag input
+    const [newCategory, setNewCategory] = useState('');
+    const [newDifficulty, setNewDifficulty] = useState('');
+    const [newPrice, setNewPrice] = useState('');
+    const [newPractice, setNewPractice] = useState('');
+
+    // State for song registration form
+    const [songTitle, setSongTitle] = useState('');
+    const [artist, setArtist] = useState('');
+    const [key, setKey] = useState('');
+    const [bpm, setBpm] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('');
+    const [selectedPractice, setSelectedPractice] = useState('');
+    const [selectedDifficulty, setSelectedDifficulty] = useState('');
+    const [selectedPrice, setSelectedPrice] = useState('');
+    const [songs, setSongs] = useState([]);
+
+    const [message, setMessage] = useState('');
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [actionToConfirm, setActionToConfirm] = useState(null);
+
+    // Firebase Auth and Firestore setup
+    useEffect(() => {
+        const authenticate = async () => {
+            try {
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Authentication Error:", error);
+            }
+        };
+
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (user) {
+                setUserId(user.uid);
+            }
+            setIsAuthReady(true);
+        });
+
+        authenticate();
+        return () => unsubscribe();
+    }, []);
+
+    // Firestore listener for tags and songs
+    useEffect(() => {
+        if (!isAuthReady || !userId) return;
+
+        const tagsDocRef = doc(db, 'artifacts', appId, 'users', userId, 'tags', 'tag_lists');
+        const songsDocRef = doc(db, 'artifacts', appId, 'users', userId, 'songs', 'song_list');
+
+        const unsubscribeTags = onSnapshot(tagsDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                setCategories(data.categories || []);
+                setDifficulties(data.difficulties || []);
+                setPrices(data.prices || []);
+                setPractices(data.practices || []);
+            }
+        }, (error) => {
+            console.error("Error fetching tags:", error);
+        });
+        
+        const unsubscribeSongs = onSnapshot(songsDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                setSongs(data.songs || []);
+            }
+        }, (error) => {
+            console.error("Error fetching songs:", error);
+        });
+
+        return () => {
+            unsubscribeTags();
+            unsubscribeSongs();
+        };
+    }, [isAuthReady, userId]);
+
+    const showMessage = (msg) => {
+        setMessage(msg);
+        setTimeout(() => setMessage(''), 5000);
+    };
+
+    // Function to add a new tag
+    const addTag = async (tagType, tagName) => {
+        if (!tagName.trim()) {
+            showMessage('태그 이름을 입력해주세요.');
+            return;
+        }
+
+        const tagsDocRef = doc(db, 'artifacts', appId, 'users', userId, 'tags', 'tag_lists');
+        
+        try {
+            const docSnap = await getDoc(tagsDocRef);
+            let updatedTags = [];
+            if (docSnap.exists()) {
+                const existingData = docSnap.data();
+                if ((existingData[tagType] || []).includes(tagName.trim())) {
+                    showMessage('이미 존재하는 태그입니다.');
+                    return;
+                }
+                updatedTags = [...(existingData[tagType] || []), tagName.trim()];
+            } else {
+                updatedTags = [tagName.trim()];
+            }
+
+            await setDoc(tagsDocRef, { [tagType]: updatedTags }, { merge: true });
+            showMessage(`${tagName} 태그가 성공적으로 추가되었습니다.`);
+            
+            if (tagType === 'categories') setNewCategory('');
+            if (tagType === 'difficulties') setNewDifficulty('');
+            if (tagType === 'prices') setNewPrice('');
+            if (tagType === 'practices') setNewPractice('');
+            
+        } catch (error) {
+            console.error("Error adding tag:", error);
+            showMessage(`태그 추가에 실패했습니다: ${error.message}`);
+        }
+    };
+
+    // Function to delete a tag
+    const deleteTag = async (tagType, tagName) => {
+        const tagsDocRef = doc(db, 'artifacts', appId, 'users', userId, 'tags', 'tag_lists');
+        
+        try {
+            const docSnap = await getDoc(tagsDocRef);
+            if (docSnap.exists()) {
+                const existingData = docSnap.data();
+                const updatedTags = (existingData[tagType] || []).filter(tag => tag !== tagName);
+                
+                await setDoc(tagsDocRef, { [tagType]: updatedTags }, { merge: true });
+                showMessage(`${tagName} 태그가 성공적으로 삭제되었습니다.`);
+            }
+        } catch (error) {
+            console.error("Error deleting tag:", error);
+            showMessage(`태그 삭제에 실패했습니다: ${error.message}`);
+        }
+    };
+
+    // Function to handle song registration or update
+    const handleSongSubmit = async (e) => {
+        e.preventDefault();
+
+        if (!songTitle || !artist) {
+            showMessage('노래 제목과 아티스트는 필수 항목입니다.');
+            return;
+        }
+        if (!selectedCategory && !selectedPractice) {
+            showMessage('카테고리 태그 또는 연습 태그 중 하나를 선택해야 합니다.');
+            return;
+        }
+
+        const newSongData = {
+            title: songTitle,
+            artist: artist,
+            key: key,
+            bpm: bpm,
+            categoryTag: selectedCategory,
+            practiceTag: selectedPractice,
+            difficultyTag: selectedDifficulty,
+            priceTag: selectedPrice,
+        };
+
+        const songsDocRef = doc(db, 'artifacts', appId, 'users', userId, 'songs', 'song_list');
+        
+        try {
+            const docSnap = await getDoc(songsDocRef);
+            let updatedSongs = docSnap.exists() ? docSnap.data().songs || [] : [];
+            
+            if (editingSongId) {
+                // Update existing song
+                updatedSongs = updatedSongs.map(song => 
+                    song.id === editingSongId ? { ...song, ...newSongData } : song
+                );
+                showMessage(`'${songTitle}' 노래가 성공적으로 수정되었습니다.`);
+            } else {
+                // Add new song
+                updatedSongs.push({ id: generateUUID(), ...newSongData, createdAt: new Date().toISOString() });
+                showMessage(`'${songTitle}' 노래가 성공적으로 등록되었습니다.`);
+            }
+
+            await setDoc(songsDocRef, { songs: updatedSongs });
+            resetForm();
+            
+        } catch (error) {
+            console.error("Error saving song:", error);
+            showMessage(`노래 저장에 실패했습니다: ${error.message}`);
+        }
+    };
+
+    // Function to delete a song
+    const deleteSong = async (songId, songTitle) => {
+        const songsDocRef = doc(db, 'artifacts', appId, 'users', userId, 'songs', 'song_list');
+        
+        try {
+            const docSnap = await getDoc(songsDocRef);
+            if (docSnap.exists()) {
+                const existingSongs = docSnap.data().songs || [];
+                const updatedSongs = existingSongs.filter(song => song.id !== songId);
+                
+                await setDoc(songsDocRef, { songs: updatedSongs });
+                showMessage(`'${songTitle}' 노래가 성공적으로 삭제되었습니다.`);
+            }
+        } catch (error) {
+            console.error("Error deleting song:", error);
+            showMessage(`노래 삭제에 실패했습니다: ${error.message}`);
+        }
+    };
+
+    // Function to prepare form for editing a song
+    const startEditingSong = (song) => {
+        setEditingSongId(song.id);
+        setSongTitle(song.title);
+        setArtist(song.artist);
+        setKey(song.key);
+        setBpm(song.bpm);
+        setSelectedCategory(song.categoryTag);
+        setSelectedPractice(song.practiceTag);
+        setSelectedDifficulty(song.difficultyTag);
+        setSelectedPrice(song.priceTag);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    // Function to reset the form
+    const resetForm = () => {
+        setEditingSongId(null);
+        setSongTitle('');
+        setArtist('');
+        setKey('');
+        setBpm('');
+        setSelectedCategory('');
+        setSelectedPractice('');
+        setSelectedDifficulty('');
+        setSelectedPrice('');
+    };
+
+    const handleConfirm = () => {
+        if (actionToConfirm) {
+            actionToConfirm();
+        }
+        setShowConfirmModal(false);
+        setActionToConfirm(null);
+    };
+
+    const handleCancelConfirm = () => {
+        setShowConfirmModal(false);
+        setActionToConfirm(null);
+    };
+
+    // UI rendering
+    return (
+        <div className="min-h-screen bg-gray-900 text-gray-100 p-4 sm:p-8 font-sans">
+            <div className="max-w-4xl mx-auto">
+                <h1 className="text-4xl font-bold text-center mb-10 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
+                    🎵 노래 등록 및 태그 관리
+                </h1>
+
+                {/* Message Box */}
+                {message && (
+                    <div className="bg-blue-600 bg-opacity-30 border border-blue-400 text-white px-4 py-3 rounded-lg shadow-md mb-6 transition-all duration-300 ease-in-out transform scale-100">
+                        <p>{message}</p>
+                    </div>
+                )}
+
+                {/* Confirmation Modal */}
+                {showConfirmModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-75">
+                        <div className="bg-gray-800 p-6 rounded-lg shadow-xl text-center max-w-sm w-full mx-4">
+                            <p className="text-xl font-semibold text-white mb-4">정말 삭제하시겠습니까?</p>
+                            <p className="text-gray-300 mb-6">이 작업은 되돌릴 수 없습니다.</p>
+                            <div className="flex justify-center space-x-4">
+                                <button
+                                    onClick={handleConfirm}
+                                    className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200"
+                                >
+                                    삭제
+                                </button>
+                                <button
+                                    onClick={handleCancelConfirm}
+                                    className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200"
+                                >
+                                    취소
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                
+                {/* User ID display */}
+                <div className="bg-gray-800 rounded-xl p-4 mb-8 shadow-lg">
+                    <p className="text-sm text-gray-400">
+                        <span className="font-semibold text-gray-300">사용자 ID:</span> {userId || '...'}
+                    </p>
+                </div>
+
+                {/* Tag Creation Section */}
+                <div className="bg-gray-800 rounded-2xl p-6 mb-8 shadow-xl">
+                    <h2 className="text-2xl font-semibold mb-6 flex items-center">
+                        <Tag className="mr-3 text-purple-400" /> 태그 생성 및 관리
+                    </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        {/* Category Tag */}
+                        <div className="bg-gray-700 rounded-lg p-4">
+                            <h3 className="text-lg font-medium mb-3 text-purple-300">카테고리</h3>
+                            <div className="flex items-center space-x-2">
+                                <input
+                                    type="text"
+                                    value={newCategory}
+                                    onChange={(e) => setNewCategory(e.target.value)}
+                                    placeholder="예: 발라드, 댄스"
+                                    className="flex-grow bg-gray-600 text-white border border-gray-500 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                                />
+                                <button
+                                    onClick={() => addTag('categories', newCategory)}
+                                    className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg p-2 transition-colors duration-200"
+                                >
+                                    <Plus className="h-5 w-5" />
+                                </button>
+                            </div>
+                            <div className="flex flex-wrap gap-2 mt-3">
+                                {categories.map((tag, index) => (
+                                    <div key={index} className="flex items-center bg-purple-500 text-white text-sm font-medium px-2 py-1 rounded-full shadow-md">
+                                        <span>{tag}</span>
+                                        <button onClick={() => {
+                                            setShowConfirmModal(true);
+                                            setActionToConfirm(() => () => deleteTag('categories', tag));
+                                        }} className="ml-2 text-white hover:text-purple-200 transition-colors duration-200">
+                                            <XCircle className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Difficulty Tag */}
+                        <div className="bg-gray-700 rounded-lg p-4">
+                            <h3 className="text-lg font-medium mb-3 text-red-300">난이도</h3>
+                            <div className="flex items-center space-x-2">
+                                <input
+                                    type="text"
+                                    value={newDifficulty}
+                                    onChange={(e) => setNewDifficulty(e.target.value)}
+                                    placeholder="예: 초급, 중급, 고급"
+                                    className="flex-grow bg-gray-600 text-white border border-gray-500 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-red-400"
+                                />
+                                <button
+                                    onClick={() => addTag('difficulties', newDifficulty)}
+                                    className="bg-red-600 hover:bg-red-700 text-white rounded-lg p-2 transition-colors duration-200"
+                                >
+                                    <Plus className="h-5 w-5" />
+                                </button>
+                            </div>
+                            <div className="flex flex-wrap gap-2 mt-3">
+                                {difficulties.map((tag, index) => (
+                                    <div key={index} className="flex items-center bg-red-500 text-white text-sm font-medium px-2 py-1 rounded-full shadow-md">
+                                        <span>{tag}</span>
+                                        <button onClick={() => {
+                                            setShowConfirmModal(true);
+                                            setActionToConfirm(() => () => deleteTag('difficulties', tag));
+                                        }} className="ml-2 text-white hover:text-red-200 transition-colors duration-200">
+                                            <XCircle className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        
+                        {/* Price Tag */}
+                        <div className="bg-gray-700 rounded-lg p-4">
+                            <h3 className="text-lg font-medium mb-3 text-green-300">가격</h3>
+                            <div className="flex items-center space-x-2">
+                                <input
+                                    type="text"
+                                    value={newPrice}
+                                    onChange={(e) => setNewPrice(e.target.value)}
+                                    placeholder="예: 무료, 유료"
+                                    className="flex-grow bg-gray-600 text-white border border-gray-500 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-green-400"
+                                />
+                                <button
+                                    onClick={() => addTag('prices', newPrice)}
+                                    className="bg-green-600 hover:bg-green-700 text-white rounded-lg p-2 transition-colors duration-200"
+                                >
+                                    <Plus className="h-5 w-5" />
+                                </button>
+                            </div>
+                            <div className="flex flex-wrap gap-2 mt-3">
+                                {prices.map((tag, index) => (
+                                    <div key={index} className="flex items-center bg-green-500 text-white text-sm font-medium px-2 py-1 rounded-full shadow-md">
+                                        <span>{tag}</span>
+                                        <button onClick={() => {
+                                            setShowConfirmModal(true);
+                                            setActionToConfirm(() => () => deleteTag('prices', tag));
+                                        }} className="ml-2 text-white hover:text-green-200 transition-colors duration-200">
+                                            <XCircle className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Practice Tag */}
+                        <div className="bg-gray-700 rounded-lg p-4">
+                            <h3 className="text-lg font-medium mb-3 text-yellow-300">연습</h3>
+                            <div className="flex items-center space-x-2">
+                                <input
+                                    type="text"
+                                    value={newPractice}
+                                    onChange={(e) => setNewPractice(e.target.value)}
+                                    placeholder="예: 박자 연습, 음정 연습"
+                                    className="flex-grow bg-gray-600 text-white border border-gray-500 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                                />
+                                <button
+                                    onClick={() => addTag('practices', newPractice)}
+                                    className="bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg p-2 transition-colors duration-200"
+                                >
+                                    <Plus className="h-5 w-5" />
+                                </button>
+                            </div>
+                            <div className="flex flex-wrap gap-2 mt-3">
+                                {practices.map((tag, index) => (
+                                    <div key={index} className="flex items-center bg-yellow-500 text-white text-sm font-medium px-2 py-1 rounded-full shadow-md">
+                                        <span>{tag}</span>
+                                        <button onClick={() => {
+                                            setShowConfirmModal(true);
+                                            setActionToConfirm(() => () => deleteTag('practices', tag));
+                                        }} className="ml-2 text-white hover:text-yellow-200 transition-colors duration-200">
+                                            <XCircle className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Song Registration Form */}
+                <div className="bg-gray-800 rounded-2xl p-6 mb-8 shadow-xl">
+                    <h2 className="text-2xl font-semibold mb-6 flex items-center">
+                        <ListFilter className="mr-3 text-pink-400" /> {editingSongId ? '노래 수정하기' : '노래 등록하기'}
+                    </h2>
+                    <form onSubmit={handleSongSubmit} className="space-y-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {/* Song Title */}
+                            <div>
+                                <label className="block text-gray-300 font-medium mb-1">
+                                    <Disc className="inline-block h-4 w-4 mr-1 text-pink-400" /> 노래 제목 *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={songTitle}
+                                    onChange={(e) => setSongTitle(e.target.value)}
+                                    className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-pink-400"
+                                    placeholder="노래 제목을 입력하세요"
+                                />
+                            </div>
+
+                            {/* Artist */}
+                            <div>
+                                <label className="block text-gray-300 font-medium mb-1">
+                                    <User className="inline-block h-4 w-4 mr-1 text-pink-400" /> 아티스트 *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={artist}
+                                    onChange={(e) => setArtist(e.target.value)}
+                                    className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-pink-400"
+                                    placeholder="아티스트를 입력하세요"
+                                />
+                            </div>
+
+                            {/* Key */}
+                            <div>
+                                <label className="block text-gray-300 font-medium mb-1">
+                                    <Music className="inline-block h-4 w-4 mr-1 text-pink-400" /> Key
+                                </label>
+                                <input
+                                    type="text"
+                                    value={key}
+                                    onChange={(e) => setKey(e.target.value)}
+                                    className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-pink-400"
+                                    placeholder="예: Dm"
+                                />
+                            </div>
+                            
+                            {/* BPM */}
+                            <div>
+                                <label className="block text-gray-300 font-medium mb-1">
+                                    <Gauge className="inline-block h-4 w-4 mr-1 text-pink-400" /> BPM
+                                </label>
+                                <input
+                                    type="number"
+                                    value={bpm}
+                                    onChange={(e) => setBpm(e.target.value)}
+                                    className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-pink-400"
+                                    placeholder="예: 120"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+                            {/* Category Tag Select */}
+                            <div>
+                                <label className="block text-gray-300 font-medium mb-1">
+                                    카테고리 태그
+                                </label>
+                                <select
+                                    value={selectedCategory}
+                                    onChange={(e) => setSelectedCategory(e.target.value)}
+                                    className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                                >
+                                    <option value="">선택</option>
+                                    {categories.map((tag, index) => (
+                                        <option key={index} value={tag}>{tag}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Practice Tag Select */}
+                            <div>
+                                <label className="block text-gray-300 font-medium mb-1">
+                                    연습 태그
+                                </label>
+                                <select
+                                    value={selectedPractice}
+                                    onChange={(e) => setSelectedPractice(e.target.value)}
+                                    className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                                >
+                                    <option value="">선택</option>
+                                    {practices.map((tag, index) => (
+                                        <option key={index} value={tag}>{tag}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Difficulty Tag Select */}
+                            <div>
+                                <label className="block text-gray-300 font-medium mb-1">
+                                    난이도 태그
+                                </label>
+                                <select
+                                    value={selectedDifficulty}
+                                    onChange={(e) => setSelectedDifficulty(e.target.value)}
+                                    className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-red-400"
+                                >
+                                    <option value="">선택</option>
+                                    {difficulties.map((tag, index) => (
+                                        <option key={index} value={tag}>{tag}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Price Tag Select */}
+                            <div>
+                                <label className="block text-gray-300 font-medium mb-1">
+                                    가격 태그
+                                </label>
+                                <select
+                                    value={selectedPrice}
+                                    onChange={(e) => setSelectedPrice(e.target.value)}
+                                    className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-green-400"
+                                >
+                                    <option value="">선택</option>
+                                    {prices.map((tag, index) => (
+                                        <option key={index} value={tag}>{tag}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="flex space-x-4 mt-6">
+                            <button
+                                type="submit"
+                                className={`flex-grow font-bold py-3 px-4 rounded-xl transition-colors duration-200 shadow-lg ${
+                                    editingSongId ? 'bg-blue-600 hover:bg-blue-700' : 'bg-pink-600 hover:bg-pink-700'
+                                }`}
+                            >
+                                {editingSongId ? '노래 수정하기' : '노래 등록하기'}
+                            </button>
+                            {editingSongId && (
+                                <button
+                                    type="button"
+                                    onClick={resetForm}
+                                    className="w-1/4 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-xl transition-colors duration-200 shadow-lg"
+                                >
+                                    수정 취소
+                                </button>
+                            )}
+                        </div>
+                    </form>
+                </div>
+                
+                {/* Registered Songs List */}
+                <div className="bg-gray-800 rounded-2xl p-6 shadow-xl">
+                    <h2 className="text-2xl font-semibold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 flex items-center">
+                        <ListFilter className="mr-3 text-cyan-400" /> 등록된 노래 목록
+                    </h2>
+                    {songs.length === 0 ? (
+                        <p className="text-gray-400 italic text-center">아직 등록된 노래가 없습니다.</p>
+                    ) : (
+                        <ul className="space-y-4">
+                            {songs.map((song) => (
+                                <li key={song.id} className="bg-gray-700 rounded-lg p-4 shadow-md transition-transform transform hover:scale-105">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div className="flex items-center">
+                                            <Disc className="text-blue-300 mr-2" />
+                                            <p className="font-bold text-lg text-white">{song.title}</p>
+                                        </div>
+                                        <div className="flex space-x-2">
+                                            <button onClick={() => startEditingSong(song)} className="text-gray-300 hover:text-blue-400 transition-colors duration-200">
+                                                <Edit className="h-5 w-5" />
+                                            </button>
+                                            <button onClick={() => {
+                                                setShowConfirmModal(true);
+                                                setActionToConfirm(() => () => deleteSong(song.id, song.title));
+                                            }} className="text-gray-300 hover:text-red-400 transition-colors duration-200">
+                                                <Trash2 className="h-5 w-5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="text-gray-300">
+                                        <p><span className="font-semibold text-gray-400">아티스트:</span> {song.artist}</p>
+                                        <p><span className="font-semibold text-gray-400">Key:</span> {song.key || 'N/A'}</p>
+                                        <p><span className="font-semibold text-gray-400">BPM:</span> {song.bpm || 'N/A'}</p>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2 mt-3">
+                                        {song.categoryTag && (
+                                            <span className="bg-purple-500 text-white text-xs font-medium px-2 py-1 rounded-full">{song.categoryTag}</span>
+                                        )}
+                                        {song.practiceTag && (
+                                            <span className="bg-yellow-500 text-white text-xs font-medium px-2 py-1 rounded-full">{song.practiceTag}</span>
+                                        )}
+                                        {song.difficultyTag && (
+                                            <span className="bg-red-500 text-white text-xs font-medium px-2 py-1 rounded-full">{song.difficultyTag}</span>
+                                        )}
+                                        {song.priceTag && (
+                                            <span className="bg-green-500 text-white text-xs font-medium px-2 py-1 rounded-full">{song.priceTag}</span>
+                                        )}
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default App;
