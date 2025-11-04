@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>노래 목록 편집기 (HTML)</title>
+    <title>HTML 노래 목록 편집기</title>
     <!-- Tailwind CSS 로드 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -11,11 +11,6 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-        }
-        /* 드래그 오버 시 스타일 */
-        .drag-over {
-            border-color: #3b82f6; /* blue-500 */
-            background-color: #eff6ff; /* blue-50 */
         }
     </style>
 </head>
@@ -25,176 +20,177 @@
         
         <!-- 앱 제목 -->
         <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-800">노래 목록 편집기 (HTML)</h1>
-            <p class="text-gray-500 mt-2">HTML 파일을 드래그하여 'songData' 배열에 노래를 추가하세요.</p>
+            <h1 class="text-3xl font-bold text-gray-800">HTML 노래 목록 편집기</h1>
+            <p class="text-gray-500 mt-2">HTML 코드를 붙여넣고 노래 배열을 업데이트하세요.</p>
         </div>
 
-        <!-- HTML 드래그 앤 드롭 영역 -->
-        <div id="drop-zone" class="mb-6 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer transition-colors duration-200 hover:border-blue-400">
-            <p class="text-gray-500">노래 배열이 포함된 `index.html` 파일을 이곳에 드래그하세요.</p>
-            <p id="file-info" class="text-sm font-medium mt-2 h-5"></p>
+        <!-- 1. HTML 입력 섹션 -->
+        <div class="mb-6">
+            <label for="html-input" class="block text-sm font-medium text-gray-700 mb-1">원본 HTML 코드</label>
+            <textarea id="html-input" rows="10" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 transition-all duration-300" placeholder="이곳에 원본 HTML 코드를 붙여넣으세요..."></textarea>
+            <button id="load-btn" class_="w-full mt-3 bg-blue-600 text-white font-bold py-3 px-4 text-lg rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200">
+                HTML 로드
+            </button>
+            <p id="file-info" class="text-sm font-medium text-center mt-3 h-5"></p>
         </div>
 
-        <!-- 입력 폼 -->
-        <form id="song-form" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-6">
+        <!-- 2. 노래 편집 섹션 (초기 숨김) -->
+        <div id="editor-section" class="hidden">
+            <!-- 입력 폼 -->
+            <form id="song-form" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-6">
+                <div>
+                    <label for="category" class="block text-sm font-medium text-gray-700 mb-1">카테고리</label>
+                    <input type="text" id="category" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="예: 남자 아이돌">
+                </div>
+                <div>
+                    <label for="title" class="block text-sm font-medium text-gray-700 mb-1">노래 제목 (필수)</label>
+                    <input type="text" id="title" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="예: Dynamite" required>
+                </div>
+                <div>
+                    <label for="artist" class="block text-sm font-medium text-gray-700 mb-1">아티스트 (필수)</label>
+                    <input type="text" id="artist" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="예: BTS" required>
+                </div>
+                <div>
+                    <label for="key" class="block text-sm font-medium text-gray-700 mb-1">키 (Key)</label>
+                    <input type="text" id="key" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="예: G#">
+                </div>
+                <div>
+                    <label for="bpm" class="block text-sm font-medium text-gray-700 mb-1">BPM</label>
+                    <input type="number" id="bpm" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="예: 114">
+                </div>
+                <div>
+                    <label for="difficulty" class="block text-sm font-medium text-gray-700 mb-1">난이도</label>
+                    <input type="text" id="difficulty" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="예: 2절">
+                </div>
+                <div>
+                    <label for="cheeseTag" class="block text-sm font-medium text-gray-700 mb-1">치즈태그</label>
+                    <input type="text" id="cheeseTag" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="예: 5,000치즈">
+                </div>
+                <div>
+                    <label for="upboType" class="block text-sm font-medium text-gray-700 mb-1">Upbo Type</label>
+                    <input type="text" id="upboType" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="">
+                </div>
+
+                <!-- 추가 버튼 -->
+                <div class="md:col-span-2">
+                    <button type="submit" id="addBtn" class="w-full bg-blue-600 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200">
+                        노래 추가
+                    </button>
+                </div>
+            </form>
+
+            <!-- 추가된 노래 목록 -->
             <div>
-                <label for="category" class="block text-sm font-medium text-gray-700 mb-1">카테고리</label>
-                <input type="text" id="category" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="예: 남자 아이돌">
-            </div>
-            <div>
-                <label for="title" class="block text-sm font-medium text-gray-700 mb-1">노래 제목 (필수)</label>
-                <input type="text" id="title" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="예: Dynamite" required>
-            </div>
-            <div>
-                <label for="artist" class="block text-sm font-medium text-gray-700 mb-1">아티스트 (필수)</label>
-                <input type="text" id="artist" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="예: BTS" required>
-            </div>
-            <div>
-                <label for="key" class="block text-sm font-medium text-gray-700 mb-1">키 (Key)</label>
-                <input type="text" id="key" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="예: G#">
-            </div>
-            <div>
-                <label for="bpm" class="block text-sm font-medium text-gray-700 mb-1">BPM</label>
-                <input type="number" id="bpm" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="예: 114">
-            </div>
-            <div>
-                <label for="difficulty" class="block text-sm font-medium text-gray-700 mb-1">난이도</label>
-                <input type="text" id="difficulty" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="예: 2절">
-            </div>
-            <div>
-                <label for="cheeseTag" class="block text-sm font-medium text-gray-700 mb-1">치즈태그</label>
-                <input type="text" id="cheeseTag" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="예: 5,000치즈">
-            </div>
-            <div>
-                <label for="upboType" class="block text-sm font-medium text-gray-700 mb-1">Upbo Type</label>
-                <input type="text" id="upboType" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="">
+                <h2 class="text-xl font-semibold text-gray-800 mb-3">추가 대기 중인 노래</h2>
+                <div id="added-songs-list" class="bg-gray-50 border border-gray-200 rounded-md p-4 min-h-[100px]">
+                    <p id="empty-list-msg" class="text-gray-500">추가된 노래가 없습니다.</p>
+                    <!-- 추가된 노래가 여기에 동적으로 삽입됩니다. -->
+                </div>
             </div>
 
-            <!-- 추가 버튼 -->
-            <div class="md:col-span-2">
-                <button type="submit" id="addBtn" class="w-full bg-blue-600 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200">
-                    노래 추가
+            <!-- 코드 생성 버튼 -->
+            <div class="mt-6">
+                <button id="generate-btn" class="w-full bg-green-600 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-200" disabled>
+                    업데이트된 HTML 코드 생성
                 </button>
             </div>
-        </form>
-
-        <!-- 추가된 노래 목록 -->
-        <div>
-            <h2 class="text-xl font-semibold text-gray-800 mb-3">추가 대기 중인 노래</h2>
-            <div id="added-songs-list" class="bg-gray-50 border border-gray-200 rounded-md p-4 min-h-[100px]">
-                <p id="empty-list-msg" class="text-gray-500">추가된 노래가 없습니다.</p>
-                <!-- 추가된 노래가 여기에 동적으로 삽입됩니다. -->
-            </div>
         </div>
 
-        <!-- 다운로드 버튼 -->
-        <div class="mt-6">
-            <button id="downloadBtn" class="w-full bg-green-600 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-200" disabled>
-                업데이트된 HTML 다운로드
+        <!-- 3. HTML 출력 섹션 (초기 숨김) -->
+        <div id="output-section" class="hidden mt-6">
+            <label for="html-output" class="block text-sm font-medium text-gray-700 mb-1">생성된 HTML 코드</label>
+            <textarea id="html-output" rows="10" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50" readonly></textarea>
+            <button id="copy-btn" class="w-full mt-3 bg-blue-600 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200">
+                전체 코드 복사
             </button>
-            <p id="download-message" class="text-sm text-center text-gray-600 mt-2 h-5"></p>
+            <p id="copy-message" class="text-sm font-medium text-center text-green-600 mt-3 h-5"></p>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const songForm = document.getElementById('song-form');
-            const addBtn = document.getElementById('addBtn');
-            const downloadBtn = document.getElementById('downloadBtn');
-            const addedSongsList = document.getElementById('added-songs-list');
-            const emptyListMsg = document.getElementById('empty-list-msg');
-            const downloadMessage = document.getElementById('download-message');
-            const dropZone = document.getElementById('drop-zone');
+            // 섹션 1: 입력
+            const htmlInput = document.getElementById('html-input');
+            const loadBtn = document.getElementById('load-btn');
             const fileInfo = document.getElementById('file-info');
 
-            // 새로 추가될 노래 데이터를 저장할 배열
+            // 섹션 2: 편집
+            const editorSection = document.getElementById('editor-section');
+            const songForm = document.getElementById('song-form');
+            const addBtn = document.getElementById('addBtn');
+            const addedSongsList = document.getElementById('added-songs-list');
+            const emptyListMsg = document.getElementById('empty-list-msg');
+            const generateBtn = document.getElementById('generate-btn');
+
+            // 섹션 3: 출력
+            const outputSection = document.getElementById('output-section');
+            const htmlOutput = document.getElementById('html-output');
+            const copyBtn = document.getElementById('copy-btn');
+            const copyMessage = document.getElementById('copy-message');
+
+            // 상태 변수
             let newSongs = [];
-            // 로드된 HTML 파일 내용을 저장할 변수
             let originalHtmlText = null;
-            // 로드된 HTML에서 추출한 기존 노래 배열
             let existingSongs = [];
-            // HTML에서 찾은 배열 선언문 전체
             let originalMatch = null; 
-            // 폼 필드와 객체 키를 매핑 (CSV 헤더 대신 사용)
             const songKeys = ['category', 'title', 'artist', 'key', 'bpm', 'difficulty', 'cheeseTag', 'upboType'];
-            // 'songData' 배열을 찾기 위한 정규식
+            
+            // HTML 파일에서 'allSongsData' 배열을 찾기 위한 정규식
             const songDataRegex = /(const|let|var)(\s+allSongsData\s*=\s*)(\[[\s\S]*?\]);/m;
 
-            // --- 드래그 앤 드롭 이벤트 ---
-            dropZone.addEventListener('dragover', (e) => {
-                e.preventDefault(); // 기본 동작 방지
-                dropZone.classList.add('drag-over');
-            });
-
-            dropZone.addEventListener('dragleave', (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('drag-over');
-            });
-
-            dropZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('drag-over');
+            // --- 1. HTML 로드 버튼 ---
+            loadBtn.addEventListener('click', () => {
+                originalHtmlText = htmlInput.value;
+                if (!originalHtmlText) {
+                    fileInfo.textContent = '❌ HTML 코드를 입력해주세요.';
+                    fileInfo.className = 'text-sm font-medium text-center mt-3 h-5 text-red-600';
+                    return;
+                }
                 
-                const files = e.dataTransfer.files;
-                if (files.length !== 1) {
-                    fileInfo.textContent = '❌ 하나의 파일만 드롭해주세요.';
-                    fileInfo.className = 'text-sm font-medium mt-2 h-5 text-red-600';
-                    return;
-                }
+                // HTML 텍스트에서 'allSongsData' 배열 찾기
+                originalMatch = originalHtmlText.match(songDataRegex);
 
-                const file = files[0];
-                if (!file.name.endsWith('.html') && file.type !== 'text/html') {
-                    fileInfo.textContent = '❌ HTML 파일만 로드할 수 있습니다.';
-                    fileInfo.className = 'text-sm font-medium mt-2 h-5 text-red-600';
-                    return;
-                }
-
-                // FileReader로 파일 읽기
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    originalHtmlText = event.target.result;
-                    
-                    // HTML 텍스트에서 'songData' 배열 찾기
-                    originalMatch = originalHtmlText.match(songDataRegex);
-
-                    if (!originalMatch || !originalMatch[3]) {
-                        fileInfo.textContent = "❌ 'songData' 배열 (예: const songData = [...];)을 찾을 수 없습니다.";
-                        fileInfo.className = 'text-sm font-medium mt-2 h-5 text-red-600';
-                        originalHtmlText = null;
-                        return;
-                    }
-
-                    const arrayContentString = originalMatch[3]; // "[ ... ]" 부분
-                    
-                    try {
-                        // JavaScript 배열 문자열을 eval로 실행하여 실제 배열 객체로 변환
-                        // 사용자가 자신의 파일을 올리는 것이므로 'eval'의 보안 위험이 낮음
-                        existingSongs = eval(arrayContentString);
-                        
-                        if (!Array.isArray(existingSongs)) {
-                           throw new Error("'songData'가 배열이 아닙니다.");
-                        }
-
-                        fileInfo.textContent = `✅ "${file.name}" 로드됨. (기존 노래 ${existingSongs.length}곡 발견)`;
-                        fileInfo.className = 'text-sm font-medium mt-2 h-5 text-green-600';
-                        checkDownloadButtonState(); // 파일 로드 후 버튼 상태 체크
-                    } catch (e) {
-                        console.error("배열 파싱 오류:", e);
-                        fileInfo.textContent = "❌ 'songData' 배열을 파싱하는 중 오류가 발생했습니다.";
-                        fileInfo.className = 'text-sm font-medium mt-2 h-5 text-red-600';
-                        originalHtmlText = null;
-                    }
-                };
-                reader.onerror = () => {
-                    fileInfo.textContent = '❌ 파일 읽기 중 오류가 발생했습니다.';
-                    fileInfo.className = 'text-sm font-medium mt-2 h-5 text-red-600';
+                if (!originalMatch || !originalMatch[3]) {
+                    fileInfo.textContent = "❌ 'allSongsData' 배열을 찾을 수 없습니다. (예: const allSongsData = [...];)";
+                    fileInfo.className = 'text-sm font-medium text-center mt-3 h-5 text-red-600';
                     originalHtmlText = null;
-                };
+                    return;
+                }
+
+                const arrayContentString = originalMatch[3]; // "[ ... ]" 부분
                 
-                reader.readAsText(file, 'UTF-8'); // UTF-8로 파일 읽기
+                try {
+                    // JavaScript 배열 문자열을 eval로 실행하여 실제 배열 객체로 변환
+                    existingSongs = eval(arrayContentString);
+                    
+                    if (!Array.isArray(existingSongs)) {
+                        throw new Error("'allSongsData'가 배열이 아닙니다.");
+                    }
+
+                    fileInfo.textContent = `✅ HTML 로드됨. (기존 노래 ${existingSongs.length}곡 발견)`;
+                    fileInfo.className = 'text-sm font-medium text-center mt-3 h-5 text-green-600';
+                    
+                    // 편집 섹션 보이기
+                    editorSection.classList.remove('hidden');
+                    // 입력창 비활성화 및 "접기"
+                    htmlInput.disabled = true;
+                    htmlInput.rows = 3; // 10줄에서 3줄로 "접기"
+
+                    loadBtn.disabled = true;
+                    loadBtn.textContent = 'HTML 로드 완료';
+                    loadBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                    loadBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+
+                    checkGenerateButtonState(); // 버튼 상태 체크
+                } catch (e) {
+                    console.error("배열 파싱 오류:", e);
+                    fileInfo.textContent = "❌ 'allSongsData' 배열을 파싱하는 중 오류가 발생했습니다.";
+                    fileInfo.className = 'text-sm font-medium text-center mt-3 h-5 text-red-600';
+                    originalHtmlText = null;
+                }
             });
             
-            // --- 폼 제출 (노래 추가) ---
+            // --- 2. 폼 제출 (노래 추가) ---
             songForm.addEventListener('submit', (e) => {
                 e.preventDefault(); // 폼 기본 제출 방지
 
@@ -203,15 +199,21 @@
                     const input = document.getElementById(key);
                     // bpm은 숫자로 저장
                     if (key === 'bpm' && input.value) {
-                         newSong[key] = parseInt(input.value, 10);
+                            newSong[key] = parseInt(input.value, 10);
                     } else {
-                         newSong[key] = input.value || ''; // 빈 값은 빈 문자열로 처리
+                            newSong[key] = input.value || ''; // 빈 값은 빈 문자열로 처리
                     }
                 });
 
-                // 필수 입력 항목 확인
                 if (!newSong.title || !newSong.artist) {
-                    alert('노래 제목과 아티스트는 필수 항목입니다.');
+                    // alert() 대신 커스텀 메시지 사용 (alert는 iframe에서 차단될 수 있음)
+                    fileInfo.textContent = '⚠️ 노래 제목과 아티스트는 필수 항목입니다.';
+                    fileInfo.className = 'text-sm font-medium text-center mt-3 h-5 text-yellow-600';
+                    setTimeout(() => { 
+                        if (fileInfo.textContent === '⚠️ 노래 제목과 아티스트는 필수 항목입니다.') {
+                           fileInfo.textContent = ''; // 잠시 후 메시지 지우기
+                        }
+                    }, 3000);
                     return;
                 }
 
@@ -226,18 +228,14 @@
                 document.getElementById('title').focus();
             });
 
-            // 다운로드 버튼 활성화/비활성화 로직
-            function checkDownloadButtonState() {
+            // 코드 생성 버튼 활성화/비활성화 로직
+            function checkGenerateButtonState() {
                 if (originalHtmlText !== null && newSongs.length > 0) {
-                    downloadBtn.disabled = false;
-                    downloadMessage.textContent = 'HTML 다운로드가 준비되었습니다.';
+                    generateBtn.disabled = false;
+                    generateBtn.textContent = `업데이트된 HTML 코드 생성 (${newSongs.length}곡 추가)`;
                 } else {
-                    downloadBtn.disabled = true;
-                    if (originalHtmlText === null) {
-                        downloadMessage.textContent = 'HTML 파일을 먼저 로드해주세요.';
-                    } else {
-                        downloadMessage.textContent = '새로운 노래를 추가해주세요.';
-                    }
+                    generateBtn.disabled = true;
+                    generateBtn.textContent = '업데이트된 HTML 코드 생성';
                 }
             }
 
@@ -263,7 +261,7 @@
                     addedSongsList.appendChild(songItem);
                 });
 
-                checkDownloadButtonState(); // 목록 업데이트 후 버튼 상태 체크
+                checkGenerateButtonState(); // 목록 업데이트 후 버튼 상태 체크
             }
 
             // 목록에서 노래 삭제
@@ -277,22 +275,19 @@
                 }
             });
 
-            // (CSV 이스케이프 함수 제거됨)
-
-            // HTML 다운로드 버튼 클릭 시
-            downloadBtn.addEventListener('click', async () => {
+            // --- 3. HTML 코드 생성 버튼 ---
+            generateBtn.addEventListener('click', async () => {
                 if (newSongs.length === 0) {
-                    downloadMessage.textContent = '추가된 노래가 없습니다.';
                     return;
                 }
 
                 if (originalHtmlText === null || !originalMatch) {
-                    downloadMessage.textContent = "HTML 파일이 로드되지 않았거나 'songData' 배열을 찾지 못했습니다.";
+                    fileInfo.textContent = "❌ HTML이 로드되지 않았거나 'allSongsData' 배열을 찾지 못했습니다.";
+                    fileInfo.className = 'text-sm font-medium text-center mt-3 h-5 text-red-600';
                     return;
                 }
 
-                downloadMessage.textContent = 'HTML 파일 생성 중...';
-                downloadBtn.disabled = true;
+                generateBtn.disabled = true;
 
                 try {
                     // 1. 기존 노래 배열과 새 노래 배열을 합침
@@ -302,9 +297,8 @@
                     const newArrayString = JSON.stringify(combinedSongs, null, 4);
 
                     // 3. 원본 HTML에서 찾았던 배열 선언문(match[0])을 새 선언문으로 교체
-                    // 예: "const songData = [ ...옛날 ... ];" -> "const songData = [ ... 새 ... ];"
                     const declarationType = originalMatch[1]; // const, let, var
-                    const variablePart = originalMatch[2]; // " songData = "
+                    const variablePart = originalMatch[2]; // " allSongsData = "
                     const newArrayDeclaration = `${declarationType}${variablePart}${newArrayString};`;
 
                     const updatedHtmlContent = originalHtmlText.replace(
@@ -312,41 +306,59 @@
                         newArrayDeclaration
                     );
 
-                    // 4. Blob 생성 및 다운로드
-                    const blob = new Blob([updatedHtmlContent], { type: 'text/html;charset=utf-8;' });
-                    const url = URL.createObjectURL(blob);
-                    
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'songlist_updated.html'; // 다운로드될 파일 이름
-                    document.body.appendChild(a);
-                    a.click();
-                    
-                    // 정리
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
+                    // 4. 생성된 코드를 출력 textarea에 표시
+                    htmlOutput.value = updatedHtmlContent;
+                    outputSection.classList.remove('hidden');
 
-                    downloadMessage.textContent = '✅ songlist_updated.html 파일이 저장되었습니다.';
-                    
                     // 5. 상태 업데이트 (연속 작업을 위해)
                     newSongs = []; // 추가 대기 목록 비우기
                     existingSongs = combinedSongs; // 기존 곡 목록을 새 목록으로 업데이트
                     originalHtmlText = updatedHtmlContent; // 원본 HTML도 업데이트
+                    htmlInput.value = updatedHtmlContent; // 원본 입력창에도 반영
                     originalMatch = originalHtmlText.match(songDataRegex); // 새 HTML에서 다시 매치 정보 찾기
+                    
                     updateAddedSongsList(); // UI 갱신 (버튼 비활성화 등)
-                    fileInfo.textContent = `✅ 파일 업데이트됨. (현재 ${existingSongs.length}곡)`;
-
+                    
+                    fileInfo.textContent = `✅ 코드 생성 완료! (현재 ${existingSongs.length}곡)`;
+                    fileInfo.className = 'text-sm font-medium text-center mt-3 h-5 text-green-600';
 
                 } catch (error) {
                     console.error('HTML 생성 오류:', error);
-                    downloadMessage.textContent = '❌ 파일 생성 중 오류가 발생했습니다. 콘솔을 확인하세요.';
-                    downloadBtn.disabled = false; // 오류 시 버튼 다시 활성화
+                    fileInfo.textContent = '❌ 코드 생성 중 오류가 발생했습니다. 콘솔을 확인하세요.';
+                    fileInfo.className = 'text-sm font-medium text-center mt-3 h-5 text-red-600';
+                    generateBtn.disabled = false; // 오류 시 버튼 다시 활성화
                 }
             });
 
-            checkDownloadButtonState(); // 페이지 초기 로드 시 버튼 상태 체크
+            // --- 4. 코드 복사 버튼 ---
+            copyBtn.addEventListener('click', () => {
+                try {
+                    htmlOutput.select();
+                    // navigator.clipboard.writeText는 iframe에서 작동하지 않을 수 있음
+                    // document.execCommand('copy') 사용
+                    const successful = document.execCommand('copy');
+                    
+                    if(successful) {
+                        copyMessage.textContent = '✅ 클립보드에 복사되었습니다!';
+                    } else {
+                        copyMessage.textContent = '❌ 복사에 실패했습니다.';
+                    }
+                } catch (err) {
+                    console.error('복사 실패:', err);
+                    copyMessage.textContent = '❌ 복사 중 오류가 발생했습니다.';
+                }
+                
+                // 2초 후 메시지 숨기기
+                setTimeout(() => {
+                    copyMessage.textContent = '';
+                }, 2000);
+            });
+
+            checkGenerateButtonState(); // 페이지 초기 로드 시 버튼 상태 체크
         });
     </script>
 </body>
 </html>
+
+
 
