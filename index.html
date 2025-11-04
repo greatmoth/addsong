@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>노래 목록 편집기</title>
+    <title>노래 목록 편집기 (HTML)</title>
     <!-- Tailwind CSS 로드 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -11,6 +11,11 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
+        }
+        /* 드래그 오버 시 스타일 */
+        .drag-over {
+            border-color: #3b82f6; /* blue-500 */
+            background-color: #eff6ff; /* blue-50 */
         }
     </style>
 </head>
@@ -20,8 +25,14 @@
         
         <!-- 앱 제목 -->
         <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-800">노래 목록 편집기</h1>
-            <p class="text-gray-500 mt-2">새로운 노래를 추가하고 CSV 파일로 다운로드하세요.</p>
+            <h1 class="text-3xl font-bold text-gray-800">노래 목록 편집기 (HTML)</h1>
+            <p class="text-gray-500 mt-2">HTML 파일을 드래그하여 'songData' 배열에 노래를 추가하세요.</p>
+        </div>
+
+        <!-- HTML 드래그 앤 드롭 영역 -->
+        <div id="drop-zone" class="mb-6 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer transition-colors duration-200 hover:border-blue-400">
+            <p class="text-gray-500">노래 배열이 포함된 `index.html` 파일을 이곳에 드래그하세요.</p>
+            <p id="file-info" class="text-sm font-medium mt-2 h-5"></p>
         </div>
 
         <!-- 입력 폼 -->
@@ -79,7 +90,7 @@
         <!-- 다운로드 버튼 -->
         <div class="mt-6">
             <button id="downloadBtn" class="w-full bg-green-600 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-200" disabled>
-                업데이트된 CSV 다운로드
+                업데이트된 HTML 다운로드
             </button>
             <p id="download-message" class="text-sm text-center text-gray-600 mt-2 h-5"></p>
         </div>
@@ -93,20 +104,109 @@
             const addedSongsList = document.getElementById('added-songs-list');
             const emptyListMsg = document.getElementById('empty-list-msg');
             const downloadMessage = document.getElementById('download-message');
+            const dropZone = document.getElementById('drop-zone');
+            const fileInfo = document.getElementById('file-info');
 
             // 새로 추가될 노래 데이터를 저장할 배열
             let newSongs = [];
-            // CSV 헤더 (파일 순서와 동일해야 함)
-            const headers = ['category', 'title', 'artist', 'key', 'bpm', 'difficulty', 'cheeseTag', 'upboType'];
+            // 로드된 HTML 파일 내용을 저장할 변수
+            let originalHtmlText = null;
+            // 로드된 HTML에서 추출한 기존 노래 배열
+            let existingSongs = [];
+            // HTML에서 찾은 배열 선언문 전체
+            let originalMatch = null; 
+            // 폼 필드와 객체 키를 매핑 (CSV 헤더 대신 사용)
+            const songKeys = ['category', 'title', 'artist', 'key', 'bpm', 'difficulty', 'cheeseTag', 'upboType'];
+            // 'songData' 배열을 찾기 위한 정규식
+            const songDataRegex = /(const|let|var)(\s+allSongsData\s*=\s*)(\[[\s\S]*?\]);/m;
 
-            // 폼 제출 (노래 추가) 이벤트
+            // --- 드래그 앤 드롭 이벤트 ---
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault(); // 기본 동작 방지
+                dropZone.classList.add('drag-over');
+            });
+
+            dropZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('drag-over');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('drag-over');
+                
+                const files = e.dataTransfer.files;
+                if (files.length !== 1) {
+                    fileInfo.textContent = '❌ 하나의 파일만 드롭해주세요.';
+                    fileInfo.className = 'text-sm font-medium mt-2 h-5 text-red-600';
+                    return;
+                }
+
+                const file = files[0];
+                if (!file.name.endsWith('.html') && file.type !== 'text/html') {
+                    fileInfo.textContent = '❌ HTML 파일만 로드할 수 있습니다.';
+                    fileInfo.className = 'text-sm font-medium mt-2 h-5 text-red-600';
+                    return;
+                }
+
+                // FileReader로 파일 읽기
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    originalHtmlText = event.target.result;
+                    
+                    // HTML 텍스트에서 'songData' 배열 찾기
+                    originalMatch = originalHtmlText.match(songDataRegex);
+
+                    if (!originalMatch || !originalMatch[3]) {
+                        fileInfo.textContent = "❌ 'songData' 배열 (예: const songData = [...];)을 찾을 수 없습니다.";
+                        fileInfo.className = 'text-sm font-medium mt-2 h-5 text-red-600';
+                        originalHtmlText = null;
+                        return;
+                    }
+
+                    const arrayContentString = originalMatch[3]; // "[ ... ]" 부분
+                    
+                    try {
+                        // JavaScript 배열 문자열을 eval로 실행하여 실제 배열 객체로 변환
+                        // 사용자가 자신의 파일을 올리는 것이므로 'eval'의 보안 위험이 낮음
+                        existingSongs = eval(arrayContentString);
+                        
+                        if (!Array.isArray(existingSongs)) {
+                           throw new Error("'songData'가 배열이 아닙니다.");
+                        }
+
+                        fileInfo.textContent = `✅ "${file.name}" 로드됨. (기존 노래 ${existingSongs.length}곡 발견)`;
+                        fileInfo.className = 'text-sm font-medium mt-2 h-5 text-green-600';
+                        checkDownloadButtonState(); // 파일 로드 후 버튼 상태 체크
+                    } catch (e) {
+                        console.error("배열 파싱 오류:", e);
+                        fileInfo.textContent = "❌ 'songData' 배열을 파싱하는 중 오류가 발생했습니다.";
+                        fileInfo.className = 'text-sm font-medium mt-2 h-5 text-red-600';
+                        originalHtmlText = null;
+                    }
+                };
+                reader.onerror = () => {
+                    fileInfo.textContent = '❌ 파일 읽기 중 오류가 발생했습니다.';
+                    fileInfo.className = 'text-sm font-medium mt-2 h-5 text-red-600';
+                    originalHtmlText = null;
+                };
+                
+                reader.readAsText(file, 'UTF-8'); // UTF-8로 파일 읽기
+            });
+            
+            // --- 폼 제출 (노래 추가) ---
             songForm.addEventListener('submit', (e) => {
                 e.preventDefault(); // 폼 기본 제출 방지
 
                 const newSong = {};
-                headers.forEach(header => {
-                    const input = document.getElementById(header);
-                    newSong[header] = input.value || ''; // 빈 값은 빈 문자열로 처리
+                songKeys.forEach(key => {
+                    const input = document.getElementById(key);
+                    // bpm은 숫자로 저장
+                    if (key === 'bpm' && input.value) {
+                         newSong[key] = parseInt(input.value, 10);
+                    } else {
+                         newSong[key] = input.value || ''; // 빈 값은 빈 문자열로 처리
+                    }
                 });
 
                 // 필수 입력 항목 확인
@@ -126,14 +226,27 @@
                 document.getElementById('title').focus();
             });
 
+            // 다운로드 버튼 활성화/비활성화 로직
+            function checkDownloadButtonState() {
+                if (originalHtmlText !== null && newSongs.length > 0) {
+                    downloadBtn.disabled = false;
+                    downloadMessage.textContent = 'HTML 다운로드가 준비되었습니다.';
+                } else {
+                    downloadBtn.disabled = true;
+                    if (originalHtmlText === null) {
+                        downloadMessage.textContent = 'HTML 파일을 먼저 로드해주세요.';
+                    } else {
+                        downloadMessage.textContent = '새로운 노래를 추가해주세요.';
+                    }
+                }
+            }
+
             // 추가된 노래 목록 UI 업데이트
             function updateAddedSongsList() {
                 if (newSongs.length > 0) {
                     emptyListMsg.style.display = 'none';
-                    downloadBtn.disabled = false;
                 } else {
                     emptyListMsg.style.display = 'block';
-                    downloadBtn.disabled = true;
                 }
 
                 // 목록 비우기 (중복 방지)
@@ -149,6 +262,8 @@
                     `;
                     addedSongsList.appendChild(songItem);
                 });
+
+                checkDownloadButtonState(); // 목록 업데이트 후 버튼 상태 체크
             }
 
             // 목록에서 노래 삭제
@@ -162,57 +277,48 @@
                 }
             });
 
-            // CSV 이스케이프 함수
-            function escapeCSV(field) {
-                if (field === null || field === undefined) {
-                    return '';
-                }
-                let str = String(field);
-                // 필드에 쉼표, 큰따옴표, 또는 줄바꿈이 포함된 경우
-                if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
-                    // 큰따옴표를 두 개로 치환하고 전체를 큰따옴표로 감싼다
-                    return `"${str.replace(/"/g, '""')}"`;
-                }
-                return str;
-            }
+            // (CSV 이스케이프 함수 제거됨)
 
-            // CSV 다운로드 버튼 클릭 시
+            // HTML 다운로드 버튼 클릭 시
             downloadBtn.addEventListener('click', async () => {
                 if (newSongs.length === 0) {
                     downloadMessage.textContent = '추가된 노래가 없습니다.';
                     return;
                 }
 
-                downloadMessage.textContent = '기존 CSV 파일을 불러오는 중...';
+                if (originalHtmlText === null || !originalMatch) {
+                    downloadMessage.textContent = "HTML 파일이 로드되지 않았거나 'songData' 배열을 찾지 못했습니다.";
+                    return;
+                }
+
+                downloadMessage.textContent = 'HTML 파일 생성 중...';
                 downloadBtn.disabled = true;
 
                 try {
-                    // 1. 기존 songlist.csv 파일 불러오기
-                    const response = await fetch('songlist.csv');
-                    if (!response.ok) {
-                        throw new Error(`파일을 불러올 수 없습니다: ${response.statusText}`);
-                    }
-                    let originalCsvText = await response.text();
+                    // 1. 기존 노래 배열과 새 노래 배열을 합침
+                    const combinedSongs = [...existingSongs, ...newSongs];
 
-                    // 2. 새로 추가된 노래들을 CSV 행으로 변환
-                    const newRows = newSongs.map(song => {
-                        return headers.map(header => escapeCSV(song[header])).join(',');
-                    }).join('\n'); // 각 행을 줄바꿈으로 연결
+                    // 2. 합쳐진 배열을 JSON 문자열로 변환 (들여쓰기 적용)
+                    const newArrayString = JSON.stringify(combinedSongs, null, 4);
 
-                    // 3. 기존 CSV 내용과 새 행들 결합
-                    // 원본 파일 끝에 줄바꿈이 없을 경우 추가
-                    if (originalCsvText.length > 0 && !originalCsvText.endsWith('\n')) {
-                        originalCsvText += '\n';
-                    }
-                    const updatedCsvContent = originalCsvText + newRows;
+                    // 3. 원본 HTML에서 찾았던 배열 선언문(match[0])을 새 선언문으로 교체
+                    // 예: "const songData = [ ...옛날 ... ];" -> "const songData = [ ... 새 ... ];"
+                    const declarationType = originalMatch[1]; // const, let, var
+                    const variablePart = originalMatch[2]; // " songData = "
+                    const newArrayDeclaration = `${declarationType}${variablePart}${newArrayString};`;
+
+                    const updatedHtmlContent = originalHtmlText.replace(
+                        originalMatch[0], 
+                        newArrayDeclaration
+                    );
 
                     // 4. Blob 생성 및 다운로드
-                    const blob = new Blob([updatedCsvContent], { type: 'text/csv;charset=utf-8;' });
+                    const blob = new Blob([updatedHtmlContent], { type: 'text/html;charset=utf-8;' });
                     const url = URL.createObjectURL(blob);
                     
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = 'songlist_updated.csv'; // 다운로드될 파일 이름
+                    a.download = 'songlist_updated.html'; // 다운로드될 파일 이름
                     document.body.appendChild(a);
                     a.click();
                     
@@ -220,21 +326,27 @@
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
 
-                    downloadMessage.textContent = '✅ songlist_updated.csv 파일이 저장되었습니다.';
+                    downloadMessage.textContent = '✅ songlist_updated.html 파일이 저장되었습니다.';
                     
-                    // 다운로드 성공 후 목록 초기화
-                    newSongs = [];
-                    updateAddedSongsList();
+                    // 5. 상태 업데이트 (연속 작업을 위해)
+                    newSongs = []; // 추가 대기 목록 비우기
+                    existingSongs = combinedSongs; // 기존 곡 목록을 새 목록으로 업데이트
+                    originalHtmlText = updatedHtmlContent; // 원본 HTML도 업데이트
+                    originalMatch = originalHtmlText.match(songDataRegex); // 새 HTML에서 다시 매치 정보 찾기
+                    updateAddedSongsList(); // UI 갱신 (버튼 비활성화 등)
+                    fileInfo.textContent = `✅ 파일 업데이트됨. (현재 ${existingSongs.length}곡)`;
+
 
                 } catch (error) {
-                    console.error('CSV 생성 오류:', error);
+                    console.error('HTML 생성 오류:', error);
                     downloadMessage.textContent = '❌ 파일 생성 중 오류가 발생했습니다. 콘솔을 확인하세요.';
-                } finally {
-                    // 다운로드 버튼은 목록이 비었으므로 updateAddedSongsList()에 의해 비활성화됨
+                    downloadBtn.disabled = false; // 오류 시 버튼 다시 활성화
                 }
             });
 
+            checkDownloadButtonState(); // 페이지 초기 로드 시 버튼 상태 체크
         });
     </script>
 </body>
 </html>
+
