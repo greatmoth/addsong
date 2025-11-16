@@ -110,7 +110,6 @@
         <!-- 2. 태그 생성 및 관리 섹션 (초기 숨김) -->
         <div id="tag-management-section" class="hidden p-6 bg-gray-800 rounded-xl shadow-lg mb-6">
             <h2 class="text-xl font-semibold text-white mb-4">2. 태그 생성 및 관리</h2>
-            <!-- [수정] 4열 그리드로 변경 -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 
                 <!-- 카테고리 관리 -->
@@ -149,7 +148,7 @@
                     </div>
                 </div>
 
-                <!-- [신규] 업보 태그 관리 -->
+                <!-- 업보 태그 관리 -->
                 <div>
                     <h3 class="text-lg font-medium text-gray-200 mb-3">업보 태그</h3>
                     <div class="flex gap-2 mb-3">
@@ -219,7 +218,7 @@
                             </select>
                         </div>
 
-                        <!-- [신규] 업보 태그 (초기 숨김) -->
+                        <!-- 업보 태그 (초기 숨김) -->
                         <div id="upboType-container" class="hidden">
                             <label for="song-upboType" class="block text-sm font-medium text-gray-300 mb-1">업보 태그</label>
                             <select id="song-upboType" data-key="upboType" class="song-input w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
@@ -268,13 +267,13 @@
                 category: document.getElementById('category-manage-list'),
                 difficulty: document.getElementById('difficulty-manage-list'),
                 priceTag: document.getElementById('priceTag-manage-list'),
-                upboType: document.getElementById('upboType-manage-list') // [신규]
+                upboType: document.getElementById('upboType-manage-list')
             };
             const tagInputs = {
                 category: document.getElementById('category-tag-input'),
                 difficulty: document.getElementById('difficulty-tag-input'),
                 priceTag: document.getElementById('priceTag-tag-input'),
-                upboType: document.getElementById('upboType-tag-input') // [신규]
+                upboType: document.getElementById('upboType-tag-input')
             };
 
             // --- 섹션 3: 노래 등록 ---
@@ -286,9 +285,13 @@
                 category: document.getElementById('song-category'),
                 difficulty: document.getElementById('song-difficulty'),
                 priceTag: document.getElementById('song-priceTag'),
-                upboType: document.getElementById('song-upboType') // [신규]
+                upboType: document.getElementById('song-upboType')
             };
-            const upboTypeContainer = document.getElementById('upboType-container'); // [신규]
+            
+            // [수정] 난이도와 가격 태그의 *컨테이너*(div)를 찾습니다.
+            const difficultyContainer = formSelects.difficulty.parentElement;
+            const priceTagContainer = formSelects.priceTag.parentElement;
+            const upboTypeContainer = document.getElementById('upboType-container');
 
             // --- 섹션 4: 노래 목록 ---
             const songListSection = document.getElementById('song-list-section');
@@ -312,7 +315,7 @@
                 category: ['남자 아이돌', '여자 아이돌', '업보목록', '제이팝', '팝송', '인디/힙합'],
                 difficulty: ['1절', '2절', '어려움'],
                 priceTag: ['5,000치즈', '10,000치즈'],
-                upboType: ['녹음', '애교곡', '노래 연습'] // [신규] (기본값)
+                upboType: ['녹음', '애교곡', '노래 연습']
             };
 
             // --- 헬퍼 함수 ---
@@ -435,7 +438,6 @@
                     const tagEl = document.createElement('span');
                     tagEl.className = 'flex items-center bg-gray-600 text-gray-200 text-sm font-medium px-2.5 py-1 rounded-full';
                     
-                    // '업보목록'은 이미 필터링되었으므로, 관리 목록에 표시되는 모든 태그는 삭제 버튼을 가짐
                     let deleteButtonHtml = `<button data-type="${type}" data-tag="${tag}" class="tag-delete-btn ml-1.5 text-red-400 hover:text-red-300">&times;</button>`;
 
                     tagEl.innerHTML = `
@@ -452,17 +454,27 @@
              */
             function renderSelectOptions(type) {
                 const selectEl = formSelects[type];
-                const currentVal = selectEl.value; // 현재 선택된 값 유지 (옵션이 삭제되지 않은 경우)
-                selectEl.innerHTML = `<option value="">선택하세요...</option>`; // 기본 옵션
+                const currentVal = selectEl.value;
+                selectEl.innerHTML = `<option value="">선택하세요...</option>`;
                 
-                tagOptions[type].forEach(tag => {
+                let optionsToRender = [...tagOptions[type]]; // 복사본 생성
+
+                // [수정] 'category' 타입일 경우, '업보목록'을 맨 뒤로 정렬
+                if (type === 'category') {
+                    const upboIndex = optionsToRender.indexOf(PROTECTED_CATEGORY);
+                    if (upboIndex > -1) {
+                        const upbo = optionsToRender.splice(upboIndex, 1); // '업보목록' 추출
+                        optionsToRender.push(...upbo); // 맨 뒤에 추가
+                    }
+                }
+                
+                optionsToRender.forEach(tag => {
                     const optionEl = document.createElement('option');
                     optionEl.value = tag;
                     optionEl.textContent = tag;
                     selectEl.appendChild(optionEl);
                 });
 
-                // 기존 값 유지 시도
                 if (tagOptions[type].includes(currentVal)) {
                     selectEl.value = currentVal;
                 }
@@ -475,11 +487,11 @@
                 renderTagManagementList('category');
                 renderTagManagementList('difficulty');
                 renderTagManagementList('priceTag');
-                renderTagManagementList('upboType'); // [신규]
+                renderTagManagementList('upboType');
                 renderSelectOptions('category');
                 renderSelectOptions('difficulty');
                 renderSelectOptions('priceTag');
-                renderSelectOptions('upboType'); // [신규]
+                renderSelectOptions('upboType');
             }
 
             // --- 카테고리 필터링 관련 함수 ---
@@ -502,17 +514,16 @@
              * 카테고리 필터 버튼을 렌더링합니다.
              */
             function renderFilterButtons() {
-                filterButtonsContainer.innerHTML = ''; // 기존 버튼 비우기
+                filterButtonsContainer.innerHTML = '';
                 
-                // 정렬 규칙 적용: '전체'가 맨 앞, '업보목록'이 맨 뒤
                 let categories = [...tagOptions.category];
                 const upboIndex = categories.indexOf(PROTECTED_CATEGORY);
                 let upbo = [];
                 if (upboIndex > -1) {
-                    upbo = categories.splice(upboIndex, 1); // '업보목록' 추출
+                    upbo = categories.splice(upboIndex, 1);
                 }
                 
-                const sortedCategories = ['전체', ...categories, ...upbo]; // '전체' + 나머지 + '업보목록'
+                const sortedCategories = ['전체', ...categories, ...upbo];
 
                 sortedCategories.forEach(category => {
                     const button = document.createElement('button');
@@ -520,7 +531,6 @@
                     button.textContent = category;
                     button.className = 'filter-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors';
                     
-                    // 활성/비활성 스타일 적용
                     if (category === currentCategory) {
                         button.classList.add('active');
                     } else {
@@ -566,8 +576,8 @@
                     songListSection.classList.remove('hidden');
 
                     renderAllTagUIs();
-                    renderFilterButtons(); // 필터 버튼 렌더링
-                    filterAndRender(); // 필터링된 목록 렌더링
+                    renderFilterButtons();
+                    filterAndRender();
                     checkGenerateButtonState();
 
                 } catch (error) {
@@ -585,7 +595,6 @@
                     const inputEl = tagInputs[type];
                     const newTag = inputEl.value.trim();
                     
-                    // '업보목록' 카테고리 추가 방지
                     if (type === 'category' && newTag === PROTECTED_CATEGORY) {
                         showToast(`'${PROTECTED_CATEGORY}'은(는) 추가할 수 없습니다.`, true);
                         inputEl.value = '';
@@ -596,7 +605,6 @@
                         tagOptions[type].push(newTag);
                         renderAllTagUIs();
                         inputEl.value = '';
-                        // 카테고리가 변경되었으므로 필터 버튼도 갱신
                         if (type === 'category') {
                             renderFilterButtons();
                         }
@@ -615,7 +623,6 @@
                 const type = target.dataset.type;
                 const tagToRemove = target.dataset.tag;
 
-                // '업보목록' 카테고리 삭제 방지 (이중 방어)
                 if (type === 'category' && tagToRemove === PROTECTED_CATEGORY) {
                     return;
                 }
@@ -624,14 +631,12 @@
                 
                 renderAllTagUIs();
 
-                // 카테고리가 변경되었으므로 필터 버튼도 갱신
                 if (type === 'category') {
-                    // 만약 현재 선택된 카테고리가 삭제되었다면 '전체'로 리셋
                     if (currentCategory === tagToRemove) {
                         currentCategory = '전체';
                     }
                     renderFilterButtons();
-                    filterAndRender(); // 노래 목록도 갱신
+                    filterAndRender();
                 }
             });
 
@@ -642,7 +647,6 @@
                 const newSong = {};
                 let isValid = true;
                 
-                // [수정] 'upboType' 추가
                 const songKeys = ['title', 'artist', 'key', 'bpm', 'category', 'difficulty', 'cheeseTag', 'upboType'];
                 songKeys.forEach(key => {
                     const inputEl = songForm.querySelector(`[data-key="${key}"]`);
@@ -657,7 +661,6 @@
                     return;
                 }
 
-                // [신규] '업보목록'일 경우 '업보 태그' 필수 체크
                 if (newSong.category === PROTECTED_CATEGORY && !newSong.upboType) {
                     showToast('업보목록 카테고리는 업보 태그가 필수입니다.', true);
                     return;
@@ -665,7 +668,7 @@
                 
                 if (newSong.difficulty === null) delete newSong.difficulty;
                 if (newSong.cheeseTag === null) delete newSong.cheeseTag;
-                if (newSong.upboType === null) delete newSong.upboType; // [신규]
+                if (newSong.upboType === null) delete newSong.upboType;
                 if (newSong.key === null) newSong.key = '?';
                 if (newSong.bpm === null) newSong.bpm = '?';
 
@@ -674,28 +677,39 @@
                 ['title', 'artist', 'key', 'bpm'].forEach(id => {
                     document.getElementById(`song-${id}`).value = '';
                 });
-                // [수정] 'upboType' 추가
                 ['category', 'difficulty', 'priceTag', 'upboType'].forEach(key => {
                     formSelects[key].value = '';
                 });
 
-                // [신규] 업보 타입 컨테이너 숨기기
+                // [수정] 업보 타입 컨테이너 및 다른 태그 컨테이너 초기화
                 upboTypeContainer.classList.add('hidden');
+                difficultyContainer.classList.remove('hidden');
+                priceTagContainer.classList.remove('hidden');
                 formSelects.upboType.required = false;
 
-                filterAndRender(); // filterAndRender 호출
+                filterAndRender();
                 checkGenerateButtonState();
             });
 
-            // [신규] 카테고리 변경 시 업보 태그 필드 표시/숨기기
+            // [수정] 카테고리 변경 시 업보 태그 및 다른 태그 필드 표시/숨기기
             formSelects.category.addEventListener('change', () => {
                 if (formSelects.category.value === PROTECTED_CATEGORY) {
+                    // '업보목록' 선택 시
                     upboTypeContainer.classList.remove('hidden');
                     formSelects.upboType.required = true;
+                    // [신규] 난이도와 가격 태그 숨기기
+                    difficultyContainer.classList.add('hidden');
+                    priceTagContainer.classList.add('hidden');
+                    formSelects.difficulty.value = ''; // 값 초기화
+                    formSelects.priceTag.value = ''; // 값 초기화
                 } else {
+                    // 다른 카테고리 선택 시
                     upboTypeContainer.classList.add('hidden');
                     formSelects.upboType.required = false;
-                    formSelects.upboType.value = ''; // 숨길 때 값 초기화
+                    formSelects.upboType.value = ''; // 값 초기화
+                    // [신규] 난이도와 가격 태그 보이기
+                    difficultyContainer.classList.remove('hidden');
+                    priceTagContainer.classList.remove('hidden');
                 }
             });
 
@@ -750,7 +764,7 @@
                     originalHtmlText = updatedHtmlContent;
                     originalMatch = originalHtmlText.match(songDataRegex);
                     
-                    filterAndRender(); // filterAndRender 호출
+                    filterAndRender();
                     
                     fileInfo.textContent = `✅ 코드 생성 및 복사 완료! (현재 ${existingSongs.length}곡)`;
                     fileInfo.className = 'text-sm font-medium text-center mt-3 h-5 text-green-400';
@@ -770,18 +784,16 @@
                 const button = e.target.closest('.filter-btn');
                 if (!button) return;
 
-                currentCategory = button.dataset.category; // 현재 카테고리 상태 업데이트
+                currentCategory = button.dataset.category;
 
-                // 모든 버튼 스타일 초기화
                 filterButtonsContainer.querySelectorAll('.filter-btn').forEach(btn => {
                     btn.classList.remove('active');
                     btn.classList.add('inactive');
                 });
-                // 클릭된 버튼만 활성 스타일 적용
                 button.classList.remove('inactive');
                 button.classList.add('active');
 
-                filterAndRender(); // 목록 갱신
+                filterAndRender();
             });
 
 
@@ -796,7 +808,7 @@
                 }
             }
 
-            checkGenerateButtonState(); // 페이지 초기 로드 시 버튼 상태 체크
+            checkGenerateButtonState();
         });
     </script>
 </body>
