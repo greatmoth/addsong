@@ -108,13 +108,18 @@
         </div>
 
         <!-- 2. 태그 생성 및 관리 섹션 (초기 숨김) -->
-        <div id="tag-management-section" class="hidden p-6 bg-gray-800 rounded-xl shadow-lg mb-6">
+        <!-- [수정] 메인 컨테이너에서 카드 스타일(bg-gray-800, p-6) 제거 -->
+        <div id="tag-management-section" class="hidden mb-6">
             <h2 class="text-xl font-semibold text-white mb-4">2. 태그 생성 및 관리</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+            <!-- [수정] 그리드에 mt-4 추가 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mt-4">
                 
                 <!-- 카테고리 관리 -->
-                <div>
-                    <h3 class="text-lg font-medium text-gray-200 mb-3">카테고리</h3>
+                <!-- [수정] 이 div가 이제 카드 스타일을 가짐 (bg-gray-800, rounded-xl, shadow-lg, p-5) -->
+                <div class="bg-gray-800 rounded-xl shadow-lg p-5">
+                    <h3 class="text-lg font-medium text-gray-200">카테고리</h3>
+                    <!-- [신규] 이미지에 나온 <hr> 추가 -->
+                    <hr class="border-gray-700 my-3">
                     <div class="flex gap-2 mb-3">
                         <input type="text" id="category-tag-input" class="flex-1 w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="새 카테고리 입력...">
                         <button id="category-tag-add" data-type="category" class="tag-add-btn px-4 py-2 bg-violet-500 text-white font-medium rounded-lg hover:bg-violet-600 transition-colors">추가</button>
@@ -125,8 +130,11 @@
                 </div>
 
                 <!-- 난이도 관리 -->
-                <div>
-                    <h3 class="text-lg font-medium text-gray-200 mb-3">난이도</h3>
+                <!-- [수정] 이 div가 이제 카드 스타일을 가짐 -->
+                <div class="bg-gray-800 rounded-xl shadow-lg p-5">
+                    <h3 class="text-lg font-medium text-gray-200">난이도</h3>
+                    <!-- [신규] 이미지에 나온 <hr> 추가 -->
+                    <hr class="border-gray-700 my-3">
                     <div class="flex gap-2 mb-3">
                         <input type="text" id="difficulty-tag-input" class="flex-1 w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="새 난이도 입력...">
                         <button id="difficulty-tag-add" data-type="difficulty" class="tag-add-btn px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors">추가</button>
@@ -137,8 +145,11 @@
                 </div>
 
                 <!-- 가격 태그 관리 -->
-                <div>
-                    <h3 class="text-lg font-medium text-gray-200 mb-3">가격 태그</h3>
+                <!-- [수정] 이 div가 이제 카드 스타일을 가짐 -->
+                <div class="bg-gray-800 rounded-xl shadow-lg p-5">
+                    <h3 class="text-lg font-medium text-gray-200">가격 태그</h3>
+                    <!-- [신규] 이미지에 나온 <hr> 추가 -->
+                    <hr class="border-gray-700 my-3">
                     <div class="flex gap-2 mb-3">
                         <input type="text" id="priceTag-tag-input" class="flex-1 w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="새 가격 태그 입력...">
                         <button id="priceTag-tag-add" data-type="priceTag" class="tag-add-btn px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors">추가</button>
@@ -149,8 +160,11 @@
                 </div>
 
                 <!-- 업보 태그 관리 -->
-                <div>
-                    <h3 class="text-lg font-medium text-gray-200 mb-3">업보 태그</h3>
+                <!-- [수정] 이 div가 이제 카드 스타일을 가짐 -->
+                <div class="bg-gray-800 rounded-xl shadow-lg p-5">
+                    <h3 class="text-lg font-medium text-gray-200">업보 태그</h3>
+                    <!-- [신규] 이미지에 나온 <hr> 추가 -->
+                    <hr class="border-gray-700 my-3">
                     <div class="flex gap-2 mb-3">
                         <input type="text" id="upboType-tag-input" class="flex-1 w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="새 업보 태그 입력...">
                         <button id="upboType-tag-add" data-type="upboType" class="tag-add-btn px-4 py-2 bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors">추가</button>
