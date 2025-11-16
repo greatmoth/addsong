@@ -3,561 +3,627 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HTML 노래 목록 편집기</title>
-    <!-- Tailwind CSS 로드 -->
+    <title>HTML 노래 편집기 (텍스트)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Inter 폰트 적용 (Tailwind의 기본 sans-serif에 포함되도록) */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
+            overflow-y: scroll; /* 스크롤바 항상 표시 */
         }
-        /* 다크모드일 때 숫자 입력 필드의 스피너 버튼 스타일 (WebKit) */
-        input[type=number]::-webkit-inner-spin-button,
-        input[type=number]::-webkit-outer-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
+        /* 로드 버튼 비활성화 시 스타일 */
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
-        /* (Firefox) */
-        input[type=number] {
-            -moz-appearance: textfield;
+        /* 태그 삭제 버튼 */
+        .tag-delete-btn {
+            line-height: 1;
+            padding: 2px 4px;
+            font-weight: bold;
+        }
+        
+        /* 노래 카드 호버 효과 */
+        .card-hover-scale {
+            transition-property: transform;
+        }
+        .card-hover-scale:hover {
+            transform: scale(1.03);
+        }
+
+        /* Toast 알림 스타일 */
+        #toast-message {
+            position: fixed;
+            bottom: -100px; /* 초기 위치 (숨김) */
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #22c55e; /* green-500 */
+            color: white;
+            padding: 12px 24px;
+            border-radius: 9999px; /* rounded-full */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            opacity: 0;
+            transition: all 0.3s ease-in-out;
+            z-index: 50;
+        }
+        #toast-message.show {
+            bottom: 20px;
+            opacity: 1;
+        }
+        #toast-message.error {
+            background-color: #ef4444; /* red-500 */
         }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-200 min-h-screen p-4 sm:p-8">
+<body class="bg-gray-900 text-gray-200 min-h-screen p-4 md:p-8">
 
-    <div class="bg-gray-800 w-full max-w-4xl mx-auto p-6 sm:p-8 rounded-xl shadow-lg">
+    <!-- Toast 알림 메시지용 div -->
+    <div id="toast-message"></div>
+
+    <div class="max-w-6xl mx-auto">
         
-        <!-- 앱 제목 -->
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-white">HTML 노래 목록 편집기</h1>
-            <p class="text-gray-400 mt-2">HTML 코드를 붙여넣고 노래 배열을 업데이트하세요.</p>
-        </div>
+        <h1 class="text-3xl font-bold text-center text-white mb-6">HTML 노래 편집기</h1>
 
-        <!-- 1. HTML 입력 섹션 (오류 수정을 위해 다시 추가) -->
+        <!-- 1. HTML 입력 섹션 -->
         <div id="input-section" class="mb-6">
             <label for="html-input" class="block text-sm font-medium text-gray-300 mb-1">1. 원본 HTML 코드 붙여넣기</label>
             <textarea id="html-input" rows="10" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 transition-all duration-300" placeholder="여기에 'allSongsData' 배열이 포함된 HTML 코드를 붙여넣으세요..."></textarea>
+            
             <button id="load-btn" class="w-full mt-3 bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-lg transition duration-200">
                 HTML 로드
             </button>
+            
+            <button id="generate-btn" class="hidden w-full mt-3 bg-green-600 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-200">
+                HTML 코드 생성 및 복사
+            </button>
+            
+            <p id="copy-message" class="text-sm font-medium text-center text-green-400 mt-3 h-5"></p>
             <p id="file-info" class="text-sm font-medium text-center mt-3 h-5"></p>
         </div>
 
         <!-- 2. 태그 생성 및 관리 섹션 (초기 숨김) -->
-        <div id="tag-management-section" class="hidden mb-6">
-            <h2 class="text-2xl font-bold text-white mb-4">태그 생성 및 관리</h2>
+        <div id="tag-management-section" class="hidden p-6 bg-gray-800 rounded-xl shadow-lg mb-6">
+            <h2 class="text-xl font-semibold text-white mb-4">2. 태그 생성 및 관리</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
                 <!-- 카테고리 관리 -->
-                <div class="bg-gray-700 p-4 rounded-lg">
-                    <h3 class="text-lg font-medium text-white mb-3">카테고리</h3>
+                <div>
+                    <h3 class="text-lg font-medium text-gray-200 mb-3">카테고리</h3>
                     <div class="flex gap-2 mb-3">
-                        <input type="text" id="new-category-input" class="w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="새 카테고리">
-                        <button id="add-category-btn" class="flex-shrink-0 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">추가</button>
+                        <input type="text" id="category-tag-input" class="flex-1 w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="새 카테고리 입력...">
+                        <button id="category-tag-add" data-type="category" class="tag-add-btn px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">추가</button>
                     </div>
-                    <div id="category-manage-list" class="space-y-2 max-h-40 overflow-y-auto">
-                        <!-- 동적 태그 목록 -->
+                    <div id="category-manage-list" class="flex flex-wrap gap-2 p-3 bg-gray-700 rounded-md min-h-[40px]">
+                        <!-- 태그 목록이 여기에 동적으로 생성됩니다 -->
                     </div>
                 </div>
 
                 <!-- 난이도 관리 -->
-                <div class="bg-gray-700 p-4 rounded-lg">
-                    <h3 class="text-lg font-medium text-white mb-3">난이도</h3>
+                <div>
+                    <h3 class="text-lg font-medium text-gray-200 mb-3">난이도</h3>
                     <div class="flex gap-2 mb-3">
-                        <input type="text" id="new-difficulty-input" class="w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="새 난이도">
-                        <button id="add-difficulty-btn" class="flex-shrink-0 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">추가</button>
+                        <input type="text" id="difficulty-tag-input" class="flex-1 w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="새 난이도 입력...">
+                        <button id="difficulty-tag-add" data-type="difficulty" class="tag-add-btn px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">추가</button>
                     </div>
-                    <div id="difficulty-manage-list" class="space-y-2 max-h-40 overflow-y-auto">
-                        <!-- 동적 태그 목록 -->
+                    <div id="difficulty-manage-list" class="flex flex-wrap gap-2 p-3 bg-gray-700 rounded-md min-h-[40px]">
+                        <!-- 태그 목록이 여기에 동적으로 생성됩니다 -->
                     </div>
                 </div>
 
                 <!-- 가격 태그 관리 -->
-                <div class="bg-gray-700 p-4 rounded-lg">
-                    <h3 class="text-lg font-medium text-white mb-3">가격 태그</h3>
+                <div>
+                    <h3 class="text-lg font-medium text-gray-200 mb-3">가격 태그</h3>
                     <div class="flex gap-2 mb-3">
-                        <input type="text" id="new-cheeseTag-input" class="w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="새 가격 태그">
-                        <button id="add-cheeseTag-btn" class="flex-shrink-0 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">추가</button>
+                        <input type="text" id="priceTag-tag-input" class="flex-1 w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="새 가격 태그 입력...">
+                        <button id="priceTag-tag-add" data-type="priceTag" class="tag-add-btn px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">추가</button>
                     </div>
-                    <div id="cheeseTag-manage-list" class="space-y-2 max-h-40 overflow-y-auto">
-                        <!-- 동적 태그 목록 -->
+                    <div id="priceTag-manage-list" class="flex flex-wrap gap-2 p-3 bg-gray-700 rounded-md min-h-[40px]">
+                        <!-- 태그 목록이 여기에 동적으로 생성됩니다 -->
                     </div>
                 </div>
+
             </div>
         </div>
 
-        <!-- 3. 노래 편집 섹션 (초기 숨김) -->
-        <div id="editor-section" class="hidden">
-            <!-- 입력 폼 -->
-            <form id="song-form" class="mb-6">
-                
-                <!-- 텍스트 입력 컨테이너 (Upbo Type이 있던 곳, 이제 비어있음) -->
-                <div class="gap-y-4 mb-6">
-                    <!-- Upbo Type 입력창이 여기에서 삭제되었습니다. -->
-                </div>
+        <!-- 3. 노래 등록하기 섹션 (초기 숨김) -->
+        <div id="editor-section" class="hidden p-6 bg-gray-800 rounded-xl shadow-lg mb-6">
+            <h2 class="text-xl font-semibold text-white mb-4">3. 노래 등록하기</h2>
+            
+            <form id="song-form" class="space-y-4">
+                <!-- "노래 등록하기" 컨테이너 -->
+                <div class="p-4 bg-gray-700 rounded-lg">
+                    <h3 class="text-lg font-medium text-gray-200 mb-4">노래 등록하기</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- 노래 제목 -->
+                        <div>
+                            <label for="song-title" class="block text-sm font-medium text-gray-300 mb-1">노래 제목</label>
+                            <input type="text" id="song-title" data-key="title" class="song-input w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                        </div>
+                        <!-- 아티스트 -->
+                        <div>
+                            <label for="song-artist" class="block text-sm font-medium text-gray-300 mb-1">아티스트</label>
+                            <input type="text" id="song-artist" data-key="artist" class="song-input w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                        </div>
+                        <!-- Key -->
+                        <div>
+                            <label for="song-key" class="block text-sm font-medium text-gray-300 mb-1">Key</label>
+                            <input type="text" id="song-key" data-key="key" class="song-input w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <!-- BPM -->
+                        <div>
+                            <label for="song-bpm" class="block text-sm font-medium text-gray-300 mb-1">BPM</label>
+                            <input type="text" id="song-bpm" data-key="bpm" class="song-input w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
 
-                <!-- 노래 등록하기 컨테이너 -->
-                <div class="bg-gray-700 p-4 rounded-lg mb-6">
-                    <h3 class="text-lg font-medium text-white mb-3">노래 등록하기</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                        <!-- 노래 제목 / 아티스트 / 키 / BPM이 여기로 이동 -->
+                        <!-- 카테고리 -->
                         <div>
-                            <label for="title" class="block text-sm font-medium text-gray-300 mb-1">노래 제목 (필수)</label>
-                            <input type="text" id="title" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="예: Dynamite" required>
+                            <label for="song-category" class="block text-sm font-medium text-gray-300 mb-1">카테고리</label>
+                            <select id="song-category" data-key="category" class="song-input w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                                <option value="">선택하세요...</option>
+                                <!-- 옵션이 동적으로 채워집니다 -->
+                            </select>
                         </div>
+                        <!-- 난이도 -->
                         <div>
-                            <label for="artist" class="block text-sm font-medium text-gray-300 mb-1">아티스트 (필수)</label>
-                            <input type="text" id="artist" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="예: BTS" required>
+                            <label for="song-difficulty" class="block text-sm font-medium text-gray-300 mb-1">난이도</label>
+                            <select id="song-difficulty" data-key="difficulty" class="song-input w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">선택하세요...</option>
+                                <!-- 옵션이 동적으로 채워집니다 -->
+                            </select>
                         </div>
+                        <!-- 가격 태그 -->
                         <div>
-                            <label for="key" class="block text-sm font-medium text-gray-300 mb-1">키 (Key)</label>
-                            <input type="text" id="key" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="예: G#">
-                        </div>
-                        <div>
-                            <label for="bpm" class="block text-sm font-medium text-gray-300 mb-1">BPM</label>
-                            <input type="number" id="bpm" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="예: 114">
+                            <label for="song-priceTag" class="block text-sm font-medium text-gray-300 mb-1">가격 태그</label>
+                            <select id="song-priceTag" data-key="cheeseTag" class="song-input w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">선택하세요...</option>
+                                <!-- 옵션이 동적으로 채워집니다 -->
+                            </select>
                         </div>
                         
-                        <!-- 기존 드롭다운 -->
-                        <!-- 카테고리 (Category) -->
-                        <div>
-                            <label for="category" class="block text-sm font-medium text-gray-300 mb-1">카테고리</label>
-                            <select id="category" class="w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                                <option value="">선택하세요</option>
-                                <option value="남자 아이돌">남자 아이돌</option>
-                                <option value="여자 아이돌">여자 아이돌</option>
-                                <option value="인디/힙합">인디/힙합</option>
-                                <option value="국내 발라드">국내 발라드</option>
-                                <option value="해외">해외</option>
-                                <option value="기타">기타</option>
-                            </select>
-                        </div>
-                        <!-- 난이도 (Difficulty) -->
-                        <div>
-                            <label for="difficulty" class="block text-sm font-medium text-gray-300 mb-1">난이도</label>
-                            <select id="difficulty" class="w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                                <option value="">선택하세요</option>
-                                <option value="1절">1절</option>
-                                <option value="2절">2절</option>
-                                <option value="어려움">어려움</option>
-                                <option value="쉬움">쉬움</option>
-                                <option value="보통">보통</option>
-                            </select>
-                        </div>
-                        <!-- 가격 태그 (cheeseTag) -->
-                        <div>
-                            <label for="cheeseTag" class="block text-sm font-medium text-gray-300 mb-1">가격 태그</label>
-                            <select id="cheeseTag" class="w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                                <option value="">선택하세요</option>
-                                <option value="5,000치즈">5,000치즈</option>
-                                <option value="10,000치즈">10,000치즈</option>
-                                <option value="15,000치즈">15,000치즈</option>
-                            </select>
-                        </div>
-
-                        <!-- 추가 버튼이 컨테이너 안으로 이동 -->
-                        <div class="md:col-span-2">
-                            <button type="submit" id="addBtn" class="w-full bg-blue-600 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200">
-                                노래 추가
-                            </button>
-                        </div>
+                        <!-- 노래 추가 버튼 -->
+                        <button id="addBtn" type="submit" class="md:col-span-2 w-full bg-blue-600 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200">
+                            노래 추가
+                        </button>
                     </div>
                 </div>
-
-                <!-- 추가 버튼이 있던 div는 삭제됨 -->
             </form>
-
-            <!-- 추가된 노래 목록 -->
-            <div>
-                <h2 class="text-xl font-semibold text-white mb-3">추가 대기 중인 노래</h2>
-                <div id="added-songs-list" class="bg-gray-700 border border-gray-600 rounded-md p-4 min-h-[100px]">
-                    <p id="empty-list-msg" class="text-gray-400">추가된 노래가 없습니다.</p>
-                    <!-- 추가된 노래가 여기에 동적으로 삽입됩니다. -->
-                </div>
-            </div>
-
-            <!-- 코드 생성 버튼 -->
-            <div class="mt-6">
-                <button id="generate-btn" class="w-full bg-green-600 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-200" disabled>
-                    업데이트된 HTML 코드 생성
-                </button>
-            </div>
         </div>
 
-        <!-- 3. HTML 출력 섹션 (초기 숨김) -->
-        <div id="output-section" class="hidden mt-6">
-            <label for="html-output" class="block text-sm font-medium text-gray-300 mb-1">생성된 HTML 코드</label>
-            <textarea id="html-output" rows="10" class="w-full px-3 py-2 bg-gray-900 border border-gray-600 text-gray-300 rounded-md shadow-sm" readonly></textarea>
-            <button id="copy-btn" class="w-full mt-3 bg-blue-600 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200">
-                전체 코드 복사
-            </button>
-            <p id="copy-message" class="text-sm font-medium text-center text-green-400 mt-3 h-5"></p>
+        <!-- 4. 전체 노래 목록 섹션 (초기 숨김) -->
+        <div id="song-list-section" class="hidden p-6 bg-gray-800 rounded-xl shadow-lg">
+            <h2 class="text-xl font-semibold text-white mb-4">4. 전체 노래 목록</h2>
+            <div id="songList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- 노래 카드가 여기에 동적으로 생성됩니다. -->
+            </div>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // 섹션 1: 입력
+            // --- 섹션 1: HTML 입력 ---
             const htmlInput = document.getElementById('html-input');
             const loadBtn = document.getElementById('load-btn');
             const fileInfo = document.getElementById('file-info');
-
-            // 섹션 2: 태그 관리 (신규)
-            const tagManagementSection = document.getElementById('tag-management-section');
-
-            // 섹션 3: 편집
-            const editorSection = document.getElementById('editor-section');
-            const songForm = document.getElementById('song-form');
-            const addBtn = document.getElementById('addBtn');
-            const addedSongsList = document.getElementById('added-songs-list');
-            const emptyListMsg = document.getElementById('empty-list-msg');
             const generateBtn = document.getElementById('generate-btn');
-
-            // 섹션 3: 출력
-            const outputSection = document.getElementById('output-section');
-            const htmlOutput = document.getElementById('html-output');
-            const copyBtn = document.getElementById('copy-btn');
             const copyMessage = document.getElementById('copy-message');
 
-            // --- 상태 변수 ---
-            let newSongs = [];
-            let originalHtmlText = null;
-            let existingSongs = [];
-            let originalMatch = null; 
-            const songKeys = ['category', 'title', 'artist', 'key', 'bpm', 'difficulty', 'cheeseTag'];
-
-            // 태그 관리용 상태 변수 (신규)
-            let tagOptions = {
-                category: ['남자 아이돌', '여자 아이돌', '인디/힙합', '국내 발라드', '해외', '기타'],
-                difficulty: ['1절', '2절', '어려움', '쉬움', '보통'],
-                cheeseTag: ['5,000치즈', '10,000치즈', '15,000치즈']
+            // --- 섹션 2: 태그 관리 ---
+            const tagManagementSection = document.getElementById('tag-management-section');
+            const tagAddButtons = document.querySelectorAll('.tag-add-btn');
+            const tagManagementLists = {
+                category: document.getElementById('category-manage-list'),
+                difficulty: document.getElementById('difficulty-manage-list'),
+                priceTag: document.getElementById('priceTag-manage-list')
             };
-            
-            // HTML 파일에서 'allSongsData' 배열을 찾기 위한 정규식
-            const songDataRegex = /(const|let|var)(\s+allSongsData\s*=\s*)(\[[\s\S]*?\]);/m;
+            const tagInputs = {
+                category: document.getElementById('category-tag-input'),
+                difficulty: document.getElementById('difficulty-tag-input'),
+                priceTag: document.getElementById('priceTag-tag-input')
+            };
+
+            // --- 섹션 3: 노래 등록 ---
+            const editorSection = document.getElementById('editor-section');
+            const songForm = document.getElementById('song-form');
+            const songInputs = document.querySelectorAll('.song-input');
+            const addBtn = document.getElementById('addBtn');
+            const formSelects = {
+                category: document.getElementById('song-category'),
+                difficulty: document.getElementById('song-difficulty'),
+                priceTag: document.getElementById('song-priceTag')
+            };
+
+            // --- 섹션 4: 노래 목록 ---
+            const songListSection = document.getElementById('song-list-section');
+            const songList = document.getElementById('songList');
+
+            // --- Toast 알림 ---
+            const toastMessage = document.getElementById('toast-message');
+
+            // --- 상태 변수 ---
+            let originalHtmlText = '';
+            let existingSongs = [];
+            let newSongs = [];
+            let originalMatch = null;
+            let songDataRegex = null;
+
+            // 태그 옵션 상태
+            let tagOptions = {
+                category: ['남자 아이돌', '여자 아이돌', '업보목록', '제이팝', '팝송', '인디/힙합'],
+                difficulty: ['1절', '2절', '어려움'],
+                priceTag: ['5,000치즈', '10,000치즈']
+            };
+
+            // --- 헬퍼 함수 ---
+
+            /**
+             * Toast 알림을 표시합니다.
+             * @param {string} message - 표시할 메시지
+             * @param {boolean} [isError=false] - 오류 메시지 여부 (빨간색)
+             */
+            function showToast(message, isError = false) {
+                toastMessage.textContent = message;
+                toastMessage.className = isError ? 'show error' : 'show';
+                
+                setTimeout(() => {
+                    toastMessage.className = '';
+                }, 2500); // 2.5초 후 사라짐
+            }
+
+            /**
+             * 텍스트를 클립보드에 복사합니다.
+             * @param {string} text - 복사할 텍스트
+             */
+            function copyToClipboard(text) {
+                // execCommand는 iframe 환경에서 더 안정적으로 작동할 수 있습니다.
+                const tempTextarea = document.createElement('textarea');
+                tempTextarea.value = text;
+                tempTextarea.style.position = 'fixed';
+                tempTextarea.style.top = '-9999px';
+                document.body.appendChild(tempTextarea);
+                tempTextarea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast(`'${text}' 복사 완료!`);
+                } catch (err) {
+                    console.error('클립보드 복사 실패:', err);
+                    showToast('복사에 실패했습니다.', true);
+                }
+                document.body.removeChild(tempTextarea);
+            }
+
+            /**
+             * 노래 목록을 카드 형태로 렌더링합니다.
+             * @param {Array} songsToRender - 렌더링할 노래 객체 배열
+             */
+            const renderSongs = (songsToRender) => {
+                songList.innerHTML = ''; // 기존 목록을 비웁니다.
+                if (songsToRender.length === 0) {
+                    songList.innerHTML = '<p class="text-center text-gray-500 col-span-full">표시할 노래가 없습니다.</p>';
+                    return;
+                }
+                
+                songsToRender.forEach(song => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-gray-700 p-4 rounded-xl shadow-md transform card-hover-scale transition-transform duration-300 cursor-pointer';
+                    
+                    let tagsHtml = '';
+                    if (song.category === '업보목록') {
+                        // '업보목록' 카테고리
+                        tagsHtml = `<span class="bg-gray-800 text-purple-400 text-xs font-semibold px-2 py-1 rounded-full">${song.upboType || '업보'}</span>`;
+                    } else {
+                        // 그 외 카테고리
+                        tagsHtml = `
+                            <span class="bg-gray-800 text-gray-400 text-xs font-semibold px-2 py-1 rounded-full">${song.category}</span>
+                            ${song.difficulty ? `<span class="bg-gray-800 text-blue-400 text-xs font-semibold px-2 py-1 rounded-full">${song.difficulty}</span>` : ''}
+                            ${song.cheeseTag ? `<span class="bg-gray-800 text-yellow-400 text-xs font-semibold px-2 py-1 rounded-full">${song.cheeseTag}</span>` : ''}
+                        `;
+                    }
+
+                    card.innerHTML = `
+                        <div class="flex items-baseline">
+                            <h3 class="text-lg font-semibold text-gray-50 truncate">${song.title}</h3>
+                            <p class="text-gray-400 text-sm truncate ml-2">${song.artist}</p>
+                        </div>
+                        <div class="flex items-center justify-between mt-1">
+                            <div class="flex space-x-2 overflow-x-auto">
+                                ${tagsHtml}
+                            </div>
+                            <div class="flex space-x-2 text-gray-500 text-xs flex-shrink-0 ml-2">
+                                <span>Key: ${song.key || '?'}</span>
+                                <span>BPM: ${song.bpm || '?'}</span>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // '업보목록'이 아닌 경우에만 복사 이벤트 리스너 추가
+                    if (song.category !== '업보목록') {
+                        card.addEventListener('click', () => {
+                            const textToCopy = `신청 ${song.title}`;
+                            copyToClipboard(textToCopy);
+                        });
+                    } else {
+                        card.style.cursor = 'default';
+                        card.addEventListener('click', () => {
+                            showToast(`'${song.title}' 곡은 업보목록이라 복사할 수 없습니다.`, true);
+                        });
+                    }
+                    
+                    songList.appendChild(card);
+                });
+            };
+
+            // --- 태그 관리 UI 렌더링 함수 ---
+
+            /**
+             * '태그 관리' 섹션의 태그 목록을 렌더링합니다. (삭제 버튼 포함)
+             * @param {string} type - 'category', 'difficulty', 'priceTag'
+             */
+            function renderTagManagementList(type) {
+                const listContainer = tagManagementLists[type];
+                listContainer.innerHTML = ''; // 목록 비우기
+                tagOptions[type].forEach(tag => {
+                    const tagEl = document.createElement('span');
+                    tagEl.className = 'flex items-center bg-gray-600 text-gray-200 text-sm font-medium px-2.5 py-1 rounded-full';
+                    tagEl.innerHTML = `
+                        <span>${tag}</span>
+                        <button data-type="${type}" data-tag="${tag}" class="tag-delete-btn ml-1.5 text-red-400 hover:text-red-300">&times;</button>
+                    `;
+                    listContainer.appendChild(tagEl);
+                });
+            }
+
+            /**
+             * '노래 등록하기' 폼의 <select> 옵션을 렌더링합니다.
+             * @param {string} type - 'category', 'difficulty', 'priceTag'
+             */
+            function renderSelectOptions(type) {
+                const selectEl = formSelects[type];
+                const currentVal = selectEl.value; // 현재 선택된 값 유지 (옵션이 삭제되지 않은 경우)
+                selectEl.innerHTML = `<option value="">선택하세요...</option>`; // 기본 옵션
+                
+                tagOptions[type].forEach(tag => {
+                    const optionEl = document.createElement('option');
+                    optionEl.value = tag;
+                    optionEl.textContent = tag;
+                    selectEl.appendChild(optionEl);
+                });
+
+                // 기존 값 유지 시도
+                if (tagOptions[type].includes(currentVal)) {
+                    selectEl.value = currentVal;
+                }
+            }
+
+            /**
+             * 모든 태그 관련 UI (관리 목록 + 폼 드롭다운)를 갱신합니다.
+             */
+            function renderAllTagUIs() {
+                renderTagManagementList('category');
+                renderTagManagementList('difficulty');
+                renderTagManagementList('priceTag');
+                renderSelectOptions('category');
+                renderSelectOptions('difficulty');
+                renderSelectOptions('priceTag');
+            }
+
+            // --- 이벤트 리스너 ---
 
             // --- 1. HTML 로드 버튼 ---
             loadBtn.addEventListener('click', () => {
                 originalHtmlText = htmlInput.value;
                 if (!originalHtmlText) {
-                    fileInfo.textContent = '❌ HTML 코드를 입력해주세요.';
+                    fileInfo.textContent = '❌ HTML 코드를 입력하세요.';
                     fileInfo.className = 'text-sm font-medium text-center mt-3 h-5 text-red-400';
                     return;
                 }
-                
-                // HTML 텍스트에서 'allSongsData' 배열 찾기
+
+                // 'allSongsData' 변수 선언부를 찾는 정규식
+                // (const|let|var)로 시작하고, 배열([]...;)로 끝나는 부분을 찾음
+                songDataRegex = /(const|let|var)\s+allSongsData\s*=\s*(\[[\s\S]*?\]);/m;
                 originalMatch = originalHtmlText.match(songDataRegex);
 
-                if (!originalMatch || !originalMatch[3]) {
-                    fileInfo.textContent = "❌ 'allSongsData' 배열을 찾을 수 없습니다. (예: const allSongsData = [...];)";
+                if (!originalMatch || !originalMatch[2]) {
+                    fileInfo.textContent = '❌ \'allSongsData\' 배열을 찾지 못했습니다.';
                     fileInfo.className = 'text-sm font-medium text-center mt-3 h-5 text-red-400';
-                    originalHtmlText = null;
                     return;
                 }
 
-                const arrayContentString = originalMatch[3]; // "[ ... ]" 부분
-                
                 try {
-                    // JavaScript 배열 문자열을 eval로 실행하여 실제 배열 객체로 변환
-                    existingSongs = eval(arrayContentString);
+                    // 배열 부분(match[2])을 파싱하여 기존 노래 목록 로드
+                    // 'eval' 대신 Function 생성자를 사용하여 좀 더 안전하게 파싱
+                    existingSongs = new Function(`return ${originalMatch[2]}`)();
                     
-                    if (!Array.isArray(existingSongs)) {
-                        throw new Error("'allSongsData'가 배열이 아닙니다.");
-                    }
-
-                    fileInfo.textContent = `✅ HTML 로드됨. (기존 노래 ${existingSongs.length}곡 발견)`;
+                    fileInfo.textContent = `✅ ${existingSongs.length}곡의 노래를 로드했습니다.`;
                     fileInfo.className = 'text-sm font-medium text-center mt-3 h-5 text-green-400';
                     
-                    // 편집 섹션 및 태그 관리 섹션 보이기 (신규)
-                    tagManagementSection.classList.remove('hidden'); // 태그 관리 보이기
-                    editorSection.classList.remove('hidden');
-                    
-                    // 입력창 비활성화 및 "접기"
+                    htmlInput.rows = 3; // 입력창 접기
                     htmlInput.disabled = true;
-                    htmlInput.rows = 3; // 10줄에서 3줄로 "접기"
-
                     loadBtn.disabled = true;
-                    loadBtn.textContent = 'HTML 로드 완료';
-                    loadBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-                    loadBtn.classList.add('bg-gray-500', 'cursor-not-allowed');
 
-                    // 태그 UI 렌더링 (신규)
+                    // 숨겨진 섹션들 표시
+                    tagManagementSection.classList.remove('hidden');
+                    editorSection.classList.remove('hidden');
+                    songListSection.classList.remove('hidden');
+
+                    // 태그 및 노래 목록 렌더링
                     renderAllTagUIs();
+                    renderSongs(existingSongs);
+                    checkGenerateButtonState(); // (중요) 버튼 상태 초기화
 
-                    checkGenerateButtonState(); // 버튼 상태 체크
-                } catch (e) {
-                    console.error("배열 파싱 오류:", e);
-                    fileInfo.textContent = "❌ 'allSongsData' 배열을 파싱하는 중 오류가 발생했습니다.";
+                } catch (error) {
+                    console.error('배열 파싱 오류:', error);
+                    fileInfo.textContent = '❌ 배열 파싱 중 오류가 발생했습니다. 콘솔을 확인하세요.';
                     fileInfo.className = 'text-sm font-medium text-center mt-3 h-5 text-red-400';
-                    originalHtmlText = null;
                 }
             });
 
-            // --- 헬퍼 함수 (오류 수정을 위해 추가) ---
-
-            // 생성 버튼 활성화/비활성화
-            function checkGenerateButtonState() {
-                if (newSongs.length > 0) {
-                    generateBtn.disabled = false;
-                    generateBtn.textContent = `업데이트된 HTML 코드 생성 (${newSongs.length}곡 추가)`;
-                } else {
-                    generateBtn.disabled = true;
-                    generateBtn.textContent = '업데이트된 HTML 코드 생성';
-                }
-            }
-
-            // 추가된 노래 목록 UI 갱신
-            function updateAddedSongsList() {
-                addedSongsList.innerHTML = ''; // 목록 비우기
-                if (newSongs.length === 0) {
-                    addedSongsList.appendChild(emptyListMsg);
-                } else {
-                    newSongs.forEach((song, index) => {
-                        const songItem = document.createElement('div');
-                        songItem.className = 'flex justify-between items-center bg-gray-600 p-2 rounded';
-                        songItem.innerHTML = `
-                            <span class="text-sm text-gray-200">${song.title} - ${song.artist}</span>
-                            <button data-index="${index}" class="delete-song-btn text-red-400 hover:text-red-300 font-bold">&times;</button>
-                        `;
-                        addedSongsList.appendChild(songItem);
-                    });
-                }
-                checkGenerateButtonState(); // 버튼 상태도 함께 갱신
-            }
+            // --- 2. 태그 관리 (추가/삭제) ---
             
-            // --- 태그 관리 헬퍼 함수 (신규, 오류 수정을 위해 추가) ---
-
-            // 모든 태그 UI 렌더링 (관리 목록 + 폼 드롭다운)
-            function renderAllTagUIs() {
-                renderTagManagementList('category');
-                renderTagManagementList('difficulty');
-                renderTagManagementList('cheeseTag');
-                
-                renderSelectOptions('category');
-                renderSelectOptions('difficulty');
-                renderSelectOptions('cheeseTag');
-            }
-
-            // "태그 관리" 섹션의 목록 렌더링
-            function renderTagManagementList(type) {
-                const listEl = document.getElementById(`${type}-manage-list`);
-                listEl.innerHTML = ''; // 목록 비우기
-                tagOptions[type].forEach(option => {
-                    const tagItem = document.createElement('div');
-                    tagItem.className = 'flex justify-between items-center bg-gray-600 p-2 rounded';
-                    tagItem.innerHTML = `
-                        <span class="text-sm text-gray-200">${escapeHTML(option)}</span>
-                        <button data-type="${type}" data-value="${escapeHTML(option)}" class="delete-tag-btn text-red-400 hover:text-red-300 font-bold">&times;</button>
-                    `;
-                    listEl.appendChild(tagItem);
-                });
-            }
-
-            // "노래 등록하기" 폼의 <select> 옵션 렌더링
-            function renderSelectOptions(type) {
-                const selectEl = document.getElementById(type);
-                const currentValue = selectEl.value; // 현재 선택된 값 저장
-                selectEl.innerHTML = '<option value="">선택하세요</option>'; // 기본 옵션
-                tagOptions[type].forEach(option => {
-                    const optionEl = document.createElement('option');
-                    optionEl.value = option;
-                    optionEl.textContent = option;
-                    selectEl.appendChild(optionEl);
-                });
-                // 이전에 선택했던 값이 새 목록에도 있다면 복원
-                if (tagOptions[type].includes(currentValue)) {
-                    selectEl.value = currentValue;
-                }
-            }
-            
-            // 간단한 XSS 방지용 HTML 이스케이프 함수
-            function escapeHTML(str) {
-                return str.replace(/[&<>"']/g, function(match) {
-                    return {
-                        '&': '&amp;',
-                        '<': '&lt;',
-                        '>': '&gt;',
-                        '"': '&quot;',
-                        "'": '&#39;'
-                    }[match];
-                });
-            }
-
-            // --- 2. 태그 관리 이벤트 리스너 (신규, 오류 수정을 위해 추가) ---
-            tagManagementSection.addEventListener('click', e => {
-                // 태그 추가
-                if (e.target.tagName === 'BUTTON' && e.target.id.startsWith('add-')) {
-                    const type = e.target.id.split('-')[1]; // category, difficulty, cheeseTag
-                    const inputEl = document.getElementById(`new-${type}-input`);
-                    const newValue = inputEl.value.trim();
-                    if (newValue && !tagOptions[type].includes(newValue)) {
-                        tagOptions[type].push(newValue);
-                        inputEl.value = ''; // 입력창 비우기
+            // 태그 추가 버튼
+            tagAddButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const type = button.dataset.type; // 'category', 'difficulty', 'priceTag'
+                    const inputEl = tagInputs[type];
+                    const newTag = inputEl.value.trim();
+                    
+                    if (newTag && !tagOptions[type].includes(newTag)) {
+                        tagOptions[type].push(newTag);
                         renderAllTagUIs(); // UI 갱신
+                        inputEl.value = ''; // 입력창 비우기
+                    } else if (!newTag) {
+                        showToast('태그 이름을 입력하세요.', true);
+                    } else {
+                        showToast('이미 존재하는 태그입니다.', true);
                     }
-                }
-
-                // 태그 삭제
-                if (e.target.classList.contains('delete-tag-btn')) {
-                    const type = e.target.dataset.type;
-                    const value = e.target.dataset.value;
-                    tagOptions[type] = tagOptions[type].filter(option => option !== value);
-                    renderAllTagUIs(); // UI 갱신
-                }
+                });
             });
-            
-            // --- 3. 폼 제출 (노래 추가) (오류 수정을 위해 추가) ---
+
+            // 태그 삭제 버튼 (이벤트 위임)
+            tagManagementSection.addEventListener('click', (e) => {
+                const target = e.target.closest('.tag-delete-btn');
+                if (!target) return;
+
+                const type = target.dataset.type;
+                const tagToRemove = target.dataset.tag;
+
+                // 상태 업데이트
+                tagOptions[type] = tagOptions[type].filter(tag => tag !== tagToRemove);
+                
+                // UI 갱신
+                renderAllTagUIs();
+            });
+
+            // --- 3. 노래 등록 폼 ---
             songForm.addEventListener('submit', (e) => {
-                e.preventDefault(); // 폼 기본 제출 동작 방지
+                e.preventDefault(); // 폼 제출 기본 동작 방지
                 
                 const newSong = {};
                 let isValid = true;
                 
-                // 폼 데이터를 songKeys 배열을 기반으로 수집
+                // 폼 입력값 수집
+                const songKeys = ['title', 'artist', 'key', 'bpm', 'category', 'difficulty', 'cheeseTag'];
                 songKeys.forEach(key => {
-                    const input = document.getElementById(key);
-                    if (input) {
-                        const value = input.value.trim();
-                        
-                        // 필수 항목 체크
-                        if ((key === 'title' || key === 'artist') && !value) {
-                            isValid = false;
-                        }
-                        
-                        // 값이 비어있지 않은 경우에만 객체에 추가
-                        if (value) {
-                            newSong[key] = (key === 'bpm') ? parseInt(value, 10) : value;
-                        }
+                    const inputEl = songForm.querySelector(`[data-key="${key}"]`);
+                    if (inputEl) {
+                        newSong[key] = inputEl.value || null; // 빈 문자열 대신 null 저장
                     }
                 });
 
-                if (!isValid) {
-                    alert('노래 제목과 아티스트는 필수 항목입니다.');
+                // 필수값 체크
+                if (!newSong.title || !newSong.artist || !newSong.category) {
+                    showToast('노래 제목, 아티스트, 카테고리는 필수입니다.', true);
+                    isValid = false;
                     return;
                 }
+                
+                // 'difficulty'나 'cheeseTag'가 'null' (선택 안 함)이면 객체에서 키를 삭제
+                if (newSong.difficulty === null) delete newSong.difficulty;
+                if (newSong.cheeseTag === null) delete newSong.cheeseTag;
+                if (newSong.key === null) newSong.key = '?'; // key나 bpm은 '?'로
+                if (newSong.bpm === null) newSong.bpm = '?';
 
-                // 새 노래를 newSongs 배열에 추가
+                // 새 노래를 대기 목록에 추가
                 newSongs.push(newSong);
                 
-                // 폼 초기화 (드롭다운은 "선택하세요"로, 텍스트는 비우기)
-                ['title', 'artist', 'key', 'bpm'].forEach(id => document.getElementById(id).value = '');
-                ['category', 'difficulty', 'cheeseTag'].forEach(id => document.getElementById(id).value = '');
+                // 폼 초기화
+                ['title', 'artist', 'key', 'bpm'].forEach(id => {
+                    document.getElementById(`song-${id}`).value = '';
+                });
+                ['category', 'difficulty', 'priceTag'].forEach(key => {
+                    formSelects[key].value = ''; // 드롭다운 초기화
+                });
 
-                // 추가된 노래 목록 UI 갱신
-                updateAddedSongsList();
+                // UI 갱신
+                renderSongs([...existingSongs, ...newSongs]); // 전체 노래 목록 갱신
+                checkGenerateButtonState(); // 생성 버튼 상태 갱신
             });
 
-            // --- 3. 추가된 노래 삭제 (이벤트 위임) (오류 수정을 위해 추가) ---
-            addedSongsList.addEventListener('click', (e) => {
-                if (e.target.classList.contains('delete-song-btn')) {
-                    const index = parseInt(e.target.dataset.index, 10);
-                    newSongs.splice(index, 1); // 배열에서 노래 삭제
-                    updateAddedSongsList(); // 목록 UI 갱신
-                }
-            });
-
-            // --- 3. HTML 코드 생성 버튼 ---
+            // --- 4. HTML 코드 생성 및 복사 버튼 ---
             generateBtn.addEventListener('click', async () => {
                 if (newSongs.length === 0) {
-                    return;
-                }
-
-                if (originalHtmlText === null || !originalMatch) {
-                    fileInfo.textContent = "❌ HTML이 로드되지 않았거나 'allSongsData' 배열을 찾지 못했습니다.";
-                    fileInfo.className = 'text-sm font-medium text-center mt-3 h-5 text-red-400';
+                    showToast('추가된 노래가 없습니다.', true);
                     return;
                 }
 
                 generateBtn.disabled = true;
+                generateBtn.textContent = '생성 중...';
 
                 try {
                     // 1. 기존 노래 배열과 새 노래 배열을 합침
-                    const combinedSongs = [...existingSongs, ...newSongs];
+                    const allSongs = [...existingSongs, ...newSongs];
 
-                    // 2. 합쳐진 배열을 JSON 문자열로 변환 (들여쓰기 적용)
-                    const newArrayString = JSON.stringify(combinedSongs, null, 4);
-
-                    // 3. 원본 HTML에서 찾았던 배열 선언문(match[0])을 새 선언문으로 교체
-                    const declarationType = originalMatch[1]; // const, let, var
-                    const variablePart = originalMatch[2]; // " allSongsData = "
-                    
-                    // --- 수정된 부분 ---
-                    // 원본 배열 선언문의 들여쓰기를 유지하려고 시도
-                    
-                    // 정규식에 사용될 문자열을 이스케이프하는 헬퍼 함수
-                    function escapeRegExp(string) {
-                        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $&는 일치하는 전체 문자열을 의미합니다.
-                    }
-
-                    // originalMatch[0] (전체 배열) 대신, 배열 선언부(const allSongsData =)만 사용하여
-                    // 안전한 정규식을 만듭니다.
-                    const safeSearchString = escapeRegExp(declarationType + variablePart);
-                    
-                    // 이 안전한 정규식을 사용하여 들여쓰기를 찾습니다.
-                    const originalIndentationMatch = originalHtmlText.match(new RegExp(`^([ \\t]*)(${safeSearchString})`, 'm'));
-                    const indentation = originalIndentationMatch ? originalIndentationMatch[1] : '            '; // 기본 들여쓰기
-                    // --- 수정 종료 ---
-                    
-                    // 새 배열 문자열에 맞게 들여쓰기 추가
-                    const indentedNewArrayString = newArrayString.split('\n').map((line, index) => {
-                        return index === 0 ? line : `${indentation}${line}`;
+                    // 2. 새 배열을 JSON 문자열로 변환 (예쁘게)
+                    // (들여쓰기 유지를 위해)
+                    const indent = originalMatch[1]; // `const` 앞의 들여쓰기
+                    const newArrayString = JSON.stringify(allSongs, null, 4);
+                    // JSON.stringify 결과물의 각 줄에 indent 추가
+                    const indentedArrayString = newArrayString.split('\n').map((line, index) => {
+                        return index === 0 ? line : `${indent}    ${line}`; // 첫 줄 제외
                     }).join('\n');
 
-                    const newArrayDeclaration = `${declarationType}${variablePart}${indentedNewArrayString};`;
+                    const newArrayDeclaration = `${originalMatch[1]}const allSongsData = ${indentedArrayString};`;
 
+                    // 3. 원본 HTML에서 배열 부분을 교체
                     const updatedHtmlContent = originalHtmlText.replace(
                         originalMatch[0], 
                         newArrayDeclaration
                     );
 
-                    // 4. 생성된 코드를 출력 textarea에 표시
-                    htmlOutput.value = updatedHtmlContent;
-                    outputSection.classList.remove('hidden');
+                    // 4. (신규) 생성된 코드를 클립보드에 복사
+                    const tempTextarea = document.createElement('textarea');
+                    tempTextarea.value = updatedHtmlContent;
+                    tempTextarea.style.position = 'fixed';
+                    tempTextarea.style.top = '-9999px';
+                    document.body.appendChild(tempTextarea);
+                    tempTextarea.select();
+                    try {
+                        const successful = document.execCommand('copy');
+                        if(successful) {
+                            copyMessage.textContent = '✅ 클립보드에 복사되었습니다!';
+                        } else {
+                            copyMessage.textContent = '❌ 복사에 실패했습니다.';
+                        }
+                    } catch (err) {
+                        console.error('복사 실패:', err);
+                        copyMessage.textContent = '❌ 복사 중 오류가 발생했습니다.';
+                    }
+                    document.body.removeChild(tempTextarea);
+                    
+                    setTimeout(() => {
+                        copyMessage.textContent = '';
+                    }, 2000); // 2초 후 메시지 숨기기
 
                     // 5. 상태 업데이트 (연속 작업을 위해)
                     newSongs = []; // 추가 대기 목록 비우기
-                    existingSongs = combinedSongs; // 기존 곡 목록을 새 목록으로 업데이트
-                    originalHtmlText = updatedHtmlContent; // 원본 HTML도 업데이트
-                    htmlInput.value = updatedHtmlContent; // 원본 입력창에도 반영
+                    existingSongs = allSongs; // 기존 목록을 새 목록으로 업데이트
+                    originalHtmlText = updatedHtmlContent; // 원본 HTML 텍스트 업데이트
                     originalMatch = originalHtmlText.match(songDataRegex); // 새 HTML에서 다시 매치 정보 찾기
                     
-                    updateAddedSongsList(); // UI 갱신 (버튼 비활성화 등)
+                    renderSongs(existingSongs); // UI 갱신
                     
-                    fileInfo.textContent = `✅ 코드 생성 완료! (현재 ${existingSongs.length}곡)`;
+                    fileInfo.textContent = `✅ 코드 생성 및 복사 완료! (현재 ${existingSongs.length}곡)`;
                     fileInfo.className = 'text-sm font-medium text-center mt-3 h-5 text-green-400';
 
                 } catch (error) {
                     console.error('HTML 생성 오류:', error);
                     fileInfo.textContent = '❌ 코드 생성 중 오류가 발생했습니다. 콘솔을 확인하세요.';
                     fileInfo.className = 'text-sm font-medium text-center mt-3 h-5 text-red-400';
-                    generateBtn.disabled = false; // 오류 시 버튼 다시 활성화
-                }
-            });
-
-            // --- 4. 코드 복사 버튼 ---
-            copyBtn.addEventListener('click', () => {
-                try {
-                    htmlOutput.select();
-                    // navigator.clipboard.writeText는 iframe에서 작동하지 않을 수 있음
-                    // document.execCommand('copy') 사용
-                    const successful = document.execCommand('copy');
-                    
-                    if(successful) {
-                        copyMessage.textContent = '✅ 클립보드에 복사되었습니다!';
-                    } else {
-                        copyMessage.textContent = '❌ 복사에 실패했습니다.';
-                    }
-                } catch (err) {
-                    console.error('복사 실패:', err);
-                    copyMessage.textContent = '❌ 복사 중 오류가 발생했습니다.';
                 }
                 
-                // 2초 후 메시지 숨기기
-                setTimeout(() => {
-                    copyMessage.textContent = '';
-                }, 2000);
+                generateBtn.disabled = false; // 버튼 다시 활성화
+                checkGenerateButtonState(); // 버튼 텍스트 및 visibility 갱신
             });
+
+            // 생성 버튼 활성화/비활성화
+            function checkGenerateButtonState() {
+                if (newSongs.length > 0) {
+                    generateBtn.classList.remove('hidden');
+                    generateBtn.textContent = `HTML 코드 생성 및 복사 (${newSongs.length}곡 추가)`;
+                } else {
+                    generateBtn.classList.add('hidden');
+                    generateBtn.textContent = 'HTML 코드 생성 및 복사';
+                }
+            }
 
             checkGenerateButtonState(); // 페이지 초기 로드 시 버튼 상태 체크
         });
