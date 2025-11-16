@@ -110,14 +110,14 @@
         <!-- 2. 태그 생성 및 관리 섹션 (초기 숨김) -->
         <div id="tag-management-section" class="hidden p-6 bg-gray-800 rounded-xl shadow-lg mb-6">
             <h2 class="text-xl font-semibold text-white mb-4">2. 태그 생성 및 관리</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
                 
                 <!-- 카테고리 관리 -->
                 <div>
                     <h3 class="text-lg font-medium text-gray-200 mb-3">카테고리</h3>
                     <div class="flex gap-2 mb-3">
                         <input type="text" id="category-tag-input" class="flex-1 w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="새 카테고리 입력...">
-                        <button id="category-tag-add" data-type="category" class="tag-add-btn px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">추가</button>
+                        <button id="category-tag-add" data-type="category" class="tag-add-btn px-4 py-2 bg-violet-500 text-white font-medium rounded-lg hover:bg-violet-600 transition-colors">추가</button>
                     </div>
                     <div id="category-manage-list" class="flex flex-wrap gap-2 p-3 bg-gray-700 rounded-md min-h-[40px]">
                         <!-- 태그 목록이 여기에 동적으로 생성됩니다 -->
@@ -129,7 +129,7 @@
                     <h3 class="text-lg font-medium text-gray-200 mb-3">난이도</h3>
                     <div class="flex gap-2 mb-3">
                         <input type="text" id="difficulty-tag-input" class="flex-1 w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="새 난이도 입력...">
-                        <button id="difficulty-tag-add" data-type="difficulty" class="tag-add-btn px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">추가</button>
+                        <button id="difficulty-tag-add" data-type="difficulty" class="tag-add-btn px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors">추가</button>
                     </div>
                     <div id="difficulty-manage-list" class="flex flex-wrap gap-2 p-3 bg-gray-700 rounded-md min-h-[40px]">
                         <!-- 태그 목록이 여기에 동적으로 생성됩니다 -->
@@ -141,7 +141,7 @@
                     <h3 class="text-lg font-medium text-gray-200 mb-3">가격 태그</h3>
                     <div class="flex gap-2 mb-3">
                         <input type="text" id="priceTag-tag-input" class="flex-1 w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="새 가격 태그 입력...">
-                        <button id="priceTag-tag-add" data-type="priceTag" class="tag-add-btn px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">추가</button>
+                        <button id="priceTag-tag-add" data-type="priceTag" class="tag-add-btn px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors">추가</button>
                     </div>
                     <div id="priceTag-manage-list" class="flex flex-wrap gap-2 p-3 bg-gray-700 rounded-md min-h-[40px]">
                         <!-- 태그 목록이 여기에 동적으로 생성됩니다 -->
@@ -153,7 +153,7 @@
                     <h3 class="text-lg font-medium text-gray-200 mb-3">업보 태그</h3>
                     <div class="flex gap-2 mb-3">
                         <input type="text" id="upboType-tag-input" class="flex-1 w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="새 업보 태그 입력...">
-                        <button id="upboType-tag-add" data-type="upboType" class="tag-add-btn px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">추가</button>
+                        <button id="upboType-tag-add" data-type="upboType" class="tag-add-btn px-4 py-2 bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors">추가</button>
                     </div>
                     <div id="upboType-manage-list" class="flex flex-wrap gap-2 p-3 bg-gray-700 rounded-md min-h-[40px]">
                         <!-- 태그 목록이 여기에 동적으로 생성됩니다 -->
@@ -288,7 +288,6 @@
                 upboType: document.getElementById('song-upboType')
             };
             
-            // [수정] 난이도와 가격 태그의 *컨테이너*(div)를 찾습니다.
             const difficultyContainer = formSelects.difficulty.parentElement;
             const priceTagContainer = formSelects.priceTag.parentElement;
             const upboTypeContainer = document.getElementById('upboType-container');
@@ -459,7 +458,7 @@
                 
                 let optionsToRender = [...tagOptions[type]]; // 복사본 생성
 
-                // [수정] 'category' 타입일 경우, '업보목록'을 맨 뒤로 정렬
+                // 'category' 타입일 경우, '업보목록'을 맨 뒤로 정렬
                 if (type === 'category') {
                     const upboIndex = optionsToRender.indexOf(PROTECTED_CATEGORY);
                     if (upboIndex > -1) {
@@ -552,17 +551,20 @@
                     return;
                 }
 
-                songDataRegex = /(const|let|var)\s+allSongsData\s*=\s*(\[[\s\S]*?\]);/m;
+                // [FIX] 정규식을 수정하여 행 시작(^)과 들여쓰기([ \t]*)를 캡처합니다.
+                songDataRegex = /^([ \t]*)(const|let|var)\s+allSongsData\s*=\s*(\[[\s\S]*?\])\s*;/m;
                 originalMatch = originalHtmlText.match(songDataRegex);
 
-                if (!originalMatch || !originalMatch[2]) {
+                // [FIX] 캡처 그룹이 3(배열)으로 변경되었습니다.
+                if (!originalMatch || !originalMatch[3]) {
                     fileInfo.textContent = '❌ \'allSongsData\' 배열을 찾지 못했습니다.';
                     fileInfo.className = 'text-sm font-medium text-center mt-3 h-5 text-red-400';
                     return;
                 }
 
                 try {
-                    existingSongs = new Function(`return ${originalMatch[2]}`)();
+                    // [FIX] 캡처 그룹이 3(배열)으로 변경되었습니다.
+                    existingSongs = new Function(`return ${originalMatch[3]}`)();
                     
                     fileInfo.textContent = `✅ ${existingSongs.length}곡의 노래를 로드했습니다.`;
                     fileInfo.className = 'text-sm font-medium text-center mt-3 h-5 text-green-400';
@@ -681,7 +683,7 @@
                     formSelects[key].value = '';
                 });
 
-                // [수정] 업보 타입 컨테이너 및 다른 태그 컨테이너 초기화
+                // 업보 타입 컨테이너 및 다른 태그 컨테이너 초기화
                 upboTypeContainer.classList.add('hidden');
                 difficultyContainer.classList.remove('hidden');
                 priceTagContainer.classList.remove('hidden');
@@ -691,13 +693,13 @@
                 checkGenerateButtonState();
             });
 
-            // [수정] 카테고리 변경 시 업보 태그 및 다른 태그 필드 표시/숨기기
+            // 카테고리 변경 시 업보 태그 및 다른 태그 필드 표시/숨기기
             formSelects.category.addEventListener('change', () => {
                 if (formSelects.category.value === PROTECTED_CATEGORY) {
                     // '업보목록' 선택 시
                     upboTypeContainer.classList.remove('hidden');
                     formSelects.upboType.required = true;
-                    // [신규] 난이도와 가격 태그 숨기기
+                    // 난이도와 가격 태그 숨기기
                     difficultyContainer.classList.add('hidden');
                     priceTagContainer.classList.add('hidden');
                     formSelects.difficulty.value = ''; // 값 초기화
@@ -707,7 +709,7 @@
                     upboTypeContainer.classList.add('hidden');
                     formSelects.upboType.required = false;
                     formSelects.upboType.value = ''; // 값 초기화
-                    // [신규] 난이도와 가격 태그 보이기
+                    // 난이도와 가격 태그 보이기
                     difficultyContainer.classList.remove('hidden');
                     priceTagContainer.classList.remove('hidden');
                 }
@@ -725,12 +727,19 @@
 
                 try {
                     const allSongs = [...existingSongs, ...newSongs];
-                    const indent = originalMatch[1];
+
+                    // [FIX] originalMatch[1]은 이제 들여쓰기입니다.
+                    const indent = originalMatch[1]; 
+                    
                     const newArrayString = JSON.stringify(allSongs, null, 4);
                     const indentedArrayString = newArrayString.split('\n').map((line, index) => {
+                        // [FIX] indent 변수가 올바른 들여쓰기 값을 갖습니다.
                         return index === 0 ? line : `${indent}    ${line}`;
                     }).join('\n');
-                    const newArrayDeclaration = `${originalMatch[1]}const allSongsData = ${indentedArrayString};`;
+                    
+                    // [FIX] originalMatch[2]는 'const' | 'let' | 'var'입니다.
+                    const newArrayDeclaration = `${indent}${originalMatch[2]} allSongsData = ${indentedArrayString};`;
+                    
                     const updatedHtmlContent = originalHtmlText.replace(
                         originalMatch[0], 
                         newArrayDeclaration
