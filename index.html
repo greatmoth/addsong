@@ -86,187 +86,195 @@
     <!-- Toast 알림 메시지용 div -->
     <div id="toast-message"></div>
 
-    <div class="max-w-6xl mx-auto">
+    <div class="max-w-[95%] mx-auto">
         
         <h1 class="text-3xl font-bold text-center text-white mb-6">HTML 노래 편집기</h1>
 
-        <!-- 1. HTML 입력 섹션 -->
-        <div id="input-section" class="mb-6">
-            <label for="html-input" class="block text-sm font-medium text-gray-300 mb-1">1. 원본 HTML 코드 붙여넣기</label>
-            <textarea id="html-input" rows="10" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 transition-all duration-300" placeholder="여기에 'allSongsData' 배열이 포함된 HTML 코드를 붙여넣으세요..."></textarea>
-            
-            <button id="load-btn" class="w-full mt-3 bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-lg transition duration-200">
-                HTML 로드
-            </button>
-            
-            <button id="generate-btn" class="hidden w-full mt-3 bg-green-600 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-200">
-                HTML 코드 생성 및 복사
-            </button>
-            
-            <p id="copy-message" class="text-sm font-medium text-center text-green-400 mt-3 h-5"></p>
-            <p id="file-info" class="text-sm font-medium text-center mt-3 h-5"></p>
-        </div>
-
-        <!-- 2. 태그 생성 및 관리 섹션 (초기 숨김) -->
-        <!-- [수정] 메인 컨테이너에서 카드 스타일(bg-gray-800, p-6) 제거 -->
-        <div id="tag-management-section" class="hidden mb-6">
-            <h2 class="text-xl font-semibold text-white mb-4">2. 태그 생성 및 관리</h2>
-            <!-- [수정] 그리드에 mt-4 추가 -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mt-4">
-                
-                <!-- 카테고리 관리 -->
-                <!-- [수정] 이 div가 이제 카드 스타일을 가짐 (bg-gray-800, rounded-xl, shadow-lg, p-5) -->
-                <div class="bg-gray-800 rounded-xl shadow-lg p-5">
-                    <h3 class="text-lg font-medium text-gray-200">카테고리</h3>
-                    <!-- [신규] 이미지에 나온 <hr> 추가 -->
-                    <hr class="border-gray-700 my-3">
-                    <div class="flex gap-2 mb-3">
-                        <input type="text" id="category-tag-input" class="flex-1 w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="새 카테고리 입력...">
-                        <button id="category-tag-add" data-type="category" class="tag-add-btn px-4 py-2 bg-violet-500 text-white font-medium rounded-lg hover:bg-violet-600 transition-colors">추가</button>
-                    </div>
-                    <div id="category-manage-list" class="flex flex-wrap gap-2 p-3 bg-gray-700 rounded-md min-h-[40px]">
-                        <!-- 태그 목록이 여기에 동적으로 생성됩니다 -->
-                    </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Input & Editor -->
+            <div class="space-y-6">
+                <!-- 1. HTML 입력 섹션 -->
+                <div id="input-section" class="mb-6">
+                    <label for="html-input" class="block text-sm font-medium text-gray-300 mb-1">1. 원본 HTML 코드 붙여넣기</label>
+                    <textarea id="html-input" rows="10" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 transition-all duration-300" placeholder="여기에 'allSongsData' 배열이 포함된 HTML 코드를 붙여넣으세요..."></textarea>
+                    
+                    <button id="load-btn" class="w-full mt-3 bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-lg transition duration-200">
+                        HTML 로드
+                    </button>
+                    
+                    <button id="generate-btn" class="hidden w-full mt-3 bg-green-600 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-200">
+                        HTML 코드 생성 및 복사
+                    </button>
+                    
+                    <p id="copy-message" class="text-sm font-medium text-center text-green-400 mt-3 h-5"></p>
+                    <p id="file-info" class="text-sm font-medium text-center mt-3 h-5"></p>
                 </div>
 
-                <!-- 난이도 관리 -->
-                <!-- [수정] 이 div가 이제 카드 스타일을 가짐 -->
-                <div class="bg-gray-800 rounded-xl shadow-lg p-5">
-                    <h3 class="text-lg font-medium text-gray-200">난이도</h3>
-                    <!-- [신규] 이미지에 나온 <hr> 추가 -->
-                    <hr class="border-gray-700 my-3">
-                    <div class="flex gap-2 mb-3">
-                        <input type="text" id="difficulty-tag-input" class="flex-1 w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="새 난이도 입력...">
-                        <button id="difficulty-tag-add" data-type="difficulty" class="tag-add-btn px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors">추가</button>
-                    </div>
-                    <div id="difficulty-manage-list" class="flex flex-wrap gap-2 p-3 bg-gray-700 rounded-md min-h-[40px]">
-                        <!-- 태그 목록이 여기에 동적으로 생성됩니다 -->
-                    </div>
-                </div>
-
-                <!-- 가격 태그 관리 -->
-                <!-- [수정] 이 div가 이제 카드 스타일을 가짐 -->
-                <div class="bg-gray-800 rounded-xl shadow-lg p-5">
-                    <h3 class="text-lg font-medium text-gray-200">가격 태그</h3>
-                    <!-- [신규] 이미지에 나온 <hr> 추가 -->
-                    <hr class="border-gray-700 my-3">
-                    <div class="flex gap-2 mb-3">
-                        <input type="text" id="priceTag-tag-input" class="flex-1 w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="새 가격 태그 입력...">
-                        <button id="priceTag-tag-add" data-type="priceTag" class="tag-add-btn px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors">추가</button>
-                    </div>
-                    <div id="priceTag-manage-list" class="flex flex-wrap gap-2 p-3 bg-gray-700 rounded-md min-h-[40px]">
-                        <!-- 태그 목록이 여기에 동적으로 생성됩니다 -->
-                    </div>
-                </div>
-
-                <!-- 업보 태그 관리 -->
-                <!-- [수정] 이 div가 이제 카드 스타일을 가짐 -->
-                <div class="bg-gray-800 rounded-xl shadow-lg p-5">
-                    <h3 class="text-lg font-medium text-gray-200">업보 태그</h3>
-                    <!-- [신규] 이미지에 나온 <hr> 추가 -->
-                    <hr class="border-gray-700 my-3">
-                    <div class="flex gap-2 mb-3">
-                        <input type="text" id="upboType-tag-input" class="flex-1 w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="새 업보 태그 입력...">
-                        <button id="upboType-tag-add" data-type="upboType" class="tag-add-btn px-4 py-2 bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors">추가</button>
-                    </div>
-                    <div id="upboType-manage-list" class="flex flex-wrap gap-2 p-3 bg-gray-700 rounded-md min-h-[40px]">
-                        <!-- 태그 목록이 여기에 동적으로 생성됩니다 -->
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- 3. 노래 등록하기 섹션 (초기 숨김) -->
-        <div id="editor-section" class="hidden p-6 bg-gray-800 rounded-xl shadow-lg mb-6">
-            <h2 class="text-xl font-semibold text-white mb-4">3. 노래 등록하기</h2>
-            
-            <form id="song-form" class="space-y-4">
-                <!-- "노래 등록하기" 컨테이너 -->
-                <div class="p-4 bg-gray-700 rounded-lg">
-                    <h3 class="text-lg font-medium text-gray-200 mb-4">노래 등록하기</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- 노래 제목 -->
-                        <div>
-                            <label for="song-title" class="block text-sm font-medium text-gray-300 mb-1">노래 제목</label>
-                            <input type="text" id="song-title" data-key="title" class="song-input w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
-                        </div>
-                        <!-- 아티스트 -->
-                        <div>
-                            <label for="song-artist" class="block text-sm font-medium text-gray-300 mb-1">아티스트</label>
-                            <input type="text" id="song-artist" data-key="artist" class="song-input w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
-                        </div>
-                        <!-- Key -->
-                        <div>
-                            <label for="song-key" class="block text-sm font-medium text-gray-300 mb-1">Key</label>
-                            <input type="text" id="song-key" data-key="key" class="song-input w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                        <!-- BPM -->
-                        <div>
-                            <label for="song-bpm" class="block text-sm font-medium text-gray-300 mb-1">BPM</label>
-                            <input type="text" id="song-bpm" data-key="bpm" class="song-input w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-
-                        <!-- 메모 -->
-                        <div class="md:col-span-2">
-                            <label for="song-memo" class="block text-sm font-medium text-gray-300 mb-1">메모</label>
-                            <input type="text" id="song-memo" data-key="memo" class="song-input w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="곡에 대한 간단한 메모를 입력하세요...">
-                        </div>
-
-                        <!-- 카테고리 -->
-                        <div>
-                            <label for="song-category" class="block text-sm font-medium text-gray-300 mb-1">카테고리</label>
-                            <select id="song-category" data-key="category" class="song-input w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
-                                <option value="">선택하세요...</option>
-                                <!-- 옵션이 동적으로 채워집니다 -->
-                            </select>
-                        </div>
-                        <!-- 난이도 -->
-                        <div>
-                            <label for="song-difficulty" class="block text-sm font-medium text-gray-300 mb-1">난이도</label>
-                            <select id="song-difficulty" data-key="difficulty" class="song-input w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                                <option value="">선택하세요...</option>
-                                <!-- 옵션이 동적으로 채워집니다 -->
-                            </select>
-                        </div>
-                        <!-- 가격 태그 -->
-                        <div>
-                            <label for="song-priceTag" class="block text-sm font-medium text-gray-300 mb-1">가격 태그</label>
-                            <select id="song-priceTag" data-key="cheeseTag" class="song-input w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                                <option value="">선택하세요...</option>
-                                <!-- 옵션이 동적으로 채워집니다 -->
-                            </select>
-                        </div>
-
-                        <!-- 업보 태그 (초기 숨김) -->
-                        <div id="upboType-container" class="hidden">
-                            <label for="song-upboType" class="block text-sm font-medium text-gray-300 mb-1">업보 태그</label>
-                            <select id="song-upboType" data-key="upboType" class="song-input w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                                <option value="">선택하세요...</option>
-                                <!-- 옵션이 동적으로 채워집니다 -->
-                            </select>
-                        </div>
+                <!-- 2. 태그 생성 및 관리 섹션 (초기 숨김) -->
+                <!-- [수정] 메인 컨테이너에서 카드 스타일(bg-gray-800, p-6) 제거 -->
+                <div id="tag-management-section" class="hidden mb-6">
+                    <h2 class="text-xl font-semibold text-white mb-4">2. 태그 생성 및 관리</h2>
+                    <!-- [수정] 그리드에 mt-4 추가 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mt-4">
                         
-                        <!-- 노래 추가 버튼 -->
-                        <button id="addBtn" type="submit" class="md:col-span-2 w-full bg-blue-600 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200">
-                            노래 추가
-                        </button>
+                        <!-- 카테고리 관리 -->
+                        <!-- [수정] 이 div가 이제 카드 스타일을 가짐 (bg-gray-800, rounded-xl, shadow-lg, p-5) -->
+                        <div class="bg-gray-800 rounded-xl shadow-lg p-5">
+                            <h3 class="text-lg font-medium text-gray-200">카테고리</h3>
+                            <!-- [신규] 이미지에 나온 <hr> 추가 -->
+                            <hr class="border-gray-700 my-3">
+                            <div class="flex gap-2 mb-3">
+                                <input type="text" id="category-tag-input" class="flex-1 w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="새 카테고리 입력...">
+                                <button id="category-tag-add" data-type="category" class="tag-add-btn px-4 py-2 bg-violet-500 text-white font-medium rounded-lg hover:bg-violet-600 transition-colors">추가</button>
+                            </div>
+                            <div id="category-manage-list" class="flex flex-wrap gap-2 p-3 bg-gray-700 rounded-md min-h-[40px]">
+                                <!-- 태그 목록이 여기에 동적으로 생성됩니다 -->
+                            </div>
+                        </div>
+
+                        <!-- 난이도 관리 -->
+                        <!-- [수정] 이 div가 이제 카드 스타일을 가짐 -->
+                        <div class="bg-gray-800 rounded-xl shadow-lg p-5">
+                            <h3 class="text-lg font-medium text-gray-200">난이도</h3>
+                            <!-- [신규] 이미지에 나온 <hr> 추가 -->
+                            <hr class="border-gray-700 my-3">
+                            <div class="flex gap-2 mb-3">
+                                <input type="text" id="difficulty-tag-input" class="flex-1 w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="새 난이도 입력...">
+                                <button id="difficulty-tag-add" data-type="difficulty" class="tag-add-btn px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors">추가</button>
+                            </div>
+                            <div id="difficulty-manage-list" class="flex flex-wrap gap-2 p-3 bg-gray-700 rounded-md min-h-[40px]">
+                                <!-- 태그 목록이 여기에 동적으로 생성됩니다 -->
+                            </div>
+                        </div>
+
+                        <!-- 가격 태그 관리 -->
+                        <!-- [수정] 이 div가 이제 카드 스타일을 가짐 -->
+                        <div class="bg-gray-800 rounded-xl shadow-lg p-5">
+                            <h3 class="text-lg font-medium text-gray-200">가격 태그</h3>
+                            <!-- [신규] 이미지에 나온 <hr> 추가 -->
+                            <hr class="border-gray-700 my-3">
+                            <div class="flex gap-2 mb-3">
+                                <input type="text" id="priceTag-tag-input" class="flex-1 w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="새 가격 태그 입력...">
+                                <button id="priceTag-tag-add" data-type="priceTag" class="tag-add-btn px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors">추가</button>
+                            </div>
+                            <div id="priceTag-manage-list" class="flex flex-wrap gap-2 p-3 bg-gray-700 rounded-md min-h-[40px]">
+                                <!-- 태그 목록이 여기에 동적으로 생성됩니다 -->
+                            </div>
+                        </div>
+
+                        <!-- 업보 태그 관리 -->
+                        <!-- [수정] 이 div가 이제 카드 스타일을 가짐 -->
+                        <div class="bg-gray-800 rounded-xl shadow-lg p-5">
+                            <h3 class="text-lg font-medium text-gray-200">업보 태그</h3>
+                            <!-- [신규] 이미지에 나온 <hr> 추가 -->
+                            <hr class="border-gray-700 my-3">
+                            <div class="flex gap-2 mb-3">
+                                <input type="text" id="upboType-tag-input" class="flex-1 w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="새 업보 태그 입력...">
+                                <button id="upboType-tag-add" data-type="upboType" class="tag-add-btn px-4 py-2 bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors">추가</button>
+                            </div>
+                            <div id="upboType-manage-list" class="flex flex-wrap gap-2 p-3 bg-gray-700 rounded-md min-h-[40px]">
+                                <!-- 태그 목록이 여기에 동적으로 생성됩니다 -->
+                            </div>
+                        </div>
+
                     </div>
                 </div>
-            </form>
-        </div>
 
-        <!-- 4. 전체 노래 목록 섹션 (초기 숨김) -->
-        <div id="song-list-section" class="hidden p-6 bg-gray-800 rounded-xl shadow-lg">
-            <h2 class="text-xl font-semibold text-white mb-4">4. 전체 노래 목록</h2>
-            
-            <!-- 카테고리 필터 버튼 컨테이너 -->
-            <div id="filter-buttons-container" class="flex flex-wrap gap-2 mb-4">
-                <!-- 필터 버튼이 여기에 동적으로 생성됩니다. -->
-            </div>
+                <!-- 3. 노래 등록하기 섹션 (초기 숨김) -->
+                <div id="editor-section" class="hidden p-6 bg-gray-800 rounded-xl shadow-lg mb-6">
+                    <h2 class="text-xl font-semibold text-white mb-4">3. 노래 등록하기</h2>
+                    
+                    <form id="song-form" class="space-y-4">
+                        <!-- "노래 등록하기" 컨테이너 -->
+                        <div class="p-4 bg-gray-700 rounded-lg">
+                            <h3 class="text-lg font-medium text-gray-200 mb-4">노래 등록하기</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- 노래 제목 -->
+                                <div>
+                                    <label for="song-title" class="block text-sm font-medium text-gray-300 mb-1">노래 제목</label>
+                                    <input type="text" id="song-title" data-key="title" class="song-input w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                                </div>
+                                <!-- 아티스트 -->
+                                <div>
+                                    <label for="song-artist" class="block text-sm font-medium text-gray-300 mb-1">아티스트</label>
+                                    <input type="text" id="song-artist" data-key="artist" class="song-input w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                                </div>
+                                <!-- Key -->
+                                <div>
+                                    <label for="song-key" class="block text-sm font-medium text-gray-300 mb-1">Key</label>
+                                    <input type="text" id="song-key" data-key="key" class="song-input w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <!-- BPM -->
+                                <div>
+                                    <label for="song-bpm" class="block text-sm font-medium text-gray-300 mb-1">BPM</label>
+                                    <input type="text" id="song-bpm" data-key="bpm" class="song-input w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                </div>
 
-            <div id="songList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- 노래 카드가 여기에 동적으로 생성됩니다. -->
+                                <!-- 메모 -->
+                                <div class="md:col-span-2">
+                                    <label for="song-memo" class="block text-sm font-medium text-gray-300 mb-1">메모</label>
+                                    <input type="text" id="song-memo" data-key="memo" class="song-input w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="곡에 대한 간단한 메모를 입력하세요...">
+                                </div>
+
+                                <!-- 카테고리 -->
+                                <div>
+                                    <label for="song-category" class="block text-sm font-medium text-gray-300 mb-1">카테고리</label>
+                                    <select id="song-category" data-key="category" class="song-input w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                                        <option value="">선택하세요...</option>
+                                        <!-- 옵션이 동적으로 채워집니다 -->
+                                    </select>
+                                </div>
+                                <!-- 난이도 -->
+                                <div>
+                                    <label for="song-difficulty" class="block text-sm font-medium text-gray-300 mb-1">난이도</label>
+                                    <select id="song-difficulty" data-key="difficulty" class="song-input w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="">선택하세요...</option>
+                                        <!-- 옵션이 동적으로 채워집니다 -->
+                                    </select>
+                                </div>
+                                <!-- 가격 태그 -->
+                                <div>
+                                    <label for="song-priceTag" class="block text-sm font-medium text-gray-300 mb-1">가격 태그</label>
+                                    <select id="song-priceTag" data-key="cheeseTag" class="song-input w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="">선택하세요...</option>
+                                        <!-- 옵션이 동적으로 채워집니다 -->
+                                    </select>
+                                </div>
+
+                                <!-- 업보 태그 (초기 숨김) -->
+                                <div id="upboType-container" class="hidden">
+                                    <label for="song-upboType" class="block text-sm font-medium text-gray-300 mb-1">업보 태그</label>
+                                    <select id="song-upboType" data-key="upboType" class="song-input w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="">선택하세요...</option>
+                                        <!-- 옵션이 동적으로 채워집니다 -->
+                                    </select>
+                                </div>
+                                
+                                <!-- 노래 추가 버튼 -->
+                                <button id="addBtn" type="submit" class="md:col-span-2 w-full bg-blue-600 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200">
+                                    노래 추가
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div> <!-- Close Left Column -->
+
+            <!-- Right Column: Song List -->
+            <div class="space-y-6">
+                <!-- 4. 전체 노래 목록 섹션 (초기 숨김) -->
+                <div id="song-list-section" class="p-6 bg-gray-800 rounded-xl shadow-lg">
+                    <h2 class="text-xl font-semibold text-white mb-4">전체 노래 목록</h2>
+                    
+                    <!-- 카테고리 필터 버튼 컨테이너 -->
+                    <div id="filter-buttons-container" class="flex flex-wrap gap-2 mb-4">
+                        <!-- 필터 버튼이 여기에 동적으로 생성됩니다. -->
+                    </div>
+
+                    <div id="songList" class="grid grid-cols-1 gap-4">
+                        <!-- 노래 카드가 여기에 동적으로 생성됩니다. -->
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -326,12 +334,13 @@
             let newSongs = [];
             let originalMatch = null;
             let songDataRegex = null;
+            let categoryContainerMatch = null; // 카테고리 컨테이너 원본 매치 저장
             let currentCategory = '전체'; // 현재 선택된 필터 카테고리
-            const PROTECTED_CATEGORY = '업보목록'; // 보호된 카테고리
+            const PROTECTED_CATEGORY = '업보목록'; // 보호된 카테고리 (기능적으로만 보호, 순서는 사용자 지정)
 
             // 태그 옵션 상태
             let tagOptions = {
-                category: ['남자 아이돌', '여자 아이돌', '업보목록', '제이팝', '팝송', '인디/힙합'],
+                category: [], // 로드 시 파싱됨
                 difficulty: ['1절', '2절', '어려움'],
                 priceTag: ['5,000치즈', '10,000치즈'],
                 upboType: ['녹음', '애교곡', '노래 연습']
@@ -441,6 +450,8 @@
 
             // --- 태그 관리 UI 렌더링 함수 ---
 
+            let draggedItem = null;
+
             /**
              * '태그 관리' 섹션의 태그 목록을 렌더링합니다. (삭제 버튼 포함)
              * @param {string} type - 'category', 'difficulty', 'priceTag', 'upboType'
@@ -451,14 +462,63 @@
                 
                 let tagsToRender = tagOptions[type];
 
-                // '카테고리' 타입일 경우, '업보목록'을 관리 목록에서 아예 노출하지 않음
-                if (type === 'category') {
-                    tagsToRender = tagOptions[type].filter(tag => tag !== PROTECTED_CATEGORY);
-                }
+                // [변경] 카테고리 순서 변경을 위해 업보목록도 포함하여 렌더링합니다.
+                // if (type === 'category') {
+                //     tagsToRender = tagOptions[type].filter(tag => tag !== PROTECTED_CATEGORY);
+                // }
 
-                tagsToRender.forEach(tag => {
+                tagsToRender.forEach((tag, index) => {
                     const tagEl = document.createElement('span');
-                    tagEl.className = 'flex items-center bg-gray-600 text-gray-200 text-sm font-medium px-2.5 py-1 rounded-full';
+                    // [추가] 드래그 앤 드롭 스타일 및 속성
+                    if (type === 'category') {
+                        tagEl.className = 'flex items-center bg-gray-600 text-gray-200 text-sm font-medium px-2.5 py-1 rounded-full cursor-move border border-transparent hover:border-blue-400 transition-colors';
+                        tagEl.draggable = true;
+                        tagEl.dataset.index = index;
+                        
+                        // 드래그 이벤트 리스너
+                        tagEl.addEventListener('dragstart', function(e) {
+                            draggedItem = { index: index, type: type };
+                            e.dataTransfer.effectAllowed = 'move';
+                            e.dataTransfer.setData('text/plain', JSON.stringify({ index, type }));
+                            setTimeout(() => this.classList.add('opacity-50'), 0);
+                        });
+                        
+                        tagEl.addEventListener('dragend', function() {
+                            this.classList.remove('opacity-50');
+                            draggedItem = null;
+                            // 드래그 종료 시 시각적 피드백 제거 (필요 시)
+                        });
+
+                        tagEl.addEventListener('dragover', function(e) {
+                            e.preventDefault(); // 드롭 허용
+                            e.dataTransfer.dropEffect = 'move';
+                            // 현재 드래그 중인 요소가 자기 자신이 아니면 스타일 변경 등 가능
+                        });
+
+                        tagEl.addEventListener('drop', function(e) {
+                            e.preventDefault();
+                            if (!draggedItem || draggedItem.type !== type) return;
+                            
+                            const fromIndex = draggedItem.index;
+                            const toIndex = index;
+                            
+                            if (fromIndex !== toIndex) {
+                                // 배열 순서 변경
+                                const items = [...tagOptions[type]];
+                                const [movedItem] = items.splice(fromIndex, 1);
+                                items.splice(toIndex, 0, movedItem);
+                                tagOptions[type] = items;
+                                
+                                // UI 갱신
+                                renderAllTagUIs();
+                                if (type === 'category') {
+                                    renderFilterButtons();
+                                }
+                            }
+                        });
+                    } else {
+                        tagEl.className = 'flex items-center bg-gray-600 text-gray-200 text-sm font-medium px-2.5 py-1 rounded-full';
+                    }
                     
                     let deleteButtonHtml = `<button data-type="${type}" data-tag="${tag}" class="tag-delete-btn ml-1.5 text-red-400 hover:text-red-300">&times;</button>`;
 
@@ -481,14 +541,8 @@
                 
                 let optionsToRender = [...tagOptions[type]]; // 복사본 생성
 
-                // 'category' 타입일 경우, '업보목록'을 맨 뒤로 정렬
-                if (type === 'category') {
-                    const upboIndex = optionsToRender.indexOf(PROTECTED_CATEGORY);
-                    if (upboIndex > -1) {
-                        const upbo = optionsToRender.splice(upboIndex, 1); // '업보목록' 추출
-                        optionsToRender.push(...upbo); // 맨 뒤에 추가
-                    }
-                }
+                // [변경] 사용자 지정 순서를 따르기 위해 강제 정렬 로직 제거
+                // if (type === 'category') { ... }
                 
                 optionsToRender.forEach(tag => {
                     const optionEl = document.createElement('option');
@@ -539,13 +593,15 @@
                 filterButtonsContainer.innerHTML = '';
                 
                 let categories = [...tagOptions.category];
-                const upboIndex = categories.indexOf(PROTECTED_CATEGORY);
-                let upbo = [];
-                if (upboIndex > -1) {
-                    upbo = categories.splice(upboIndex, 1);
-                }
                 
-                const sortedCategories = ['전체', ...categories, ...upbo];
+                // [변경] 사용자 정의 순서를 따르기 위해 강제 정렬 로직 제거
+                // const upboIndex = categories.indexOf(PROTECTED_CATEGORY);
+                // let upbo = [];
+                // if (upboIndex > -1) {
+                //     upbo = categories.splice(upboIndex, 1);
+                // }
+                
+                const sortedCategories = ['전체', ...categories]; // '전체'만 맨 앞에 고정
 
                 sortedCategories.forEach(category => {
                     const button = document.createElement('button');
@@ -574,19 +630,53 @@
                     return;
                 }
 
-                // [FIX] 정규식을 수정하여 행 시작(^)과 들여쓰기([ \t]*)를 캡처합니다.
+                // 1. 노래 데이터 파싱
                 songDataRegex = /^([ \t]*)(const|let|var)\s+allSongsData\s*=\s*(\[[\s\S]*?\])\s*;/m;
                 originalMatch = originalHtmlText.match(songDataRegex);
 
-                // [FIX] 캡처 그룹이 3(배열)으로 변경되었습니다.
                 if (!originalMatch || !originalMatch[3]) {
                     fileInfo.textContent = '❌ \'allSongsData\' 배열을 찾지 못했습니다.';
                     fileInfo.className = 'text-sm font-medium text-center mt-3 h-5 text-red-400';
                     return;
                 }
 
+                // 2. 카테고리 데이터 파싱
+                // 카테고리 버튼들이 들어있는 컨테이너를 찾습니다. (class 기반)
+                // 주의: HTML 구조가 바뀌면 이 정규식도 수정되어야 합니다.
+                // <div class="flex flex-wrap justify-center gap-1 sm:gap-2"> ... </div>
+                const categoryContainerRegex = /<div[^>]*class="[^"]*flex flex-wrap justify-center gap-1 sm:gap-2[^"]*"[^>]*>([\s\S]*?)<\/div>/i;
+                categoryContainerMatch = originalHtmlText.match(categoryContainerRegex);
+
+                if (categoryContainerMatch && categoryContainerMatch[1]) {
+                    const buttonHtml = categoryContainerMatch[1];
+                    const categoryRegex = /data-category="([^"]+)"/g;
+                    let match;
+                    const parsedCategories = [];
+                    
+                    while ((match = categoryRegex.exec(buttonHtml)) !== null) {
+                        const cat = match[1];
+                        // '전체'와 'All'은 제외 (필터링용 고정 버튼)
+                        if (cat !== '전체' && cat !== 'All') {
+                            // 중복 제거
+                            if (!parsedCategories.includes(cat)) {
+                                parsedCategories.push(cat);
+                            }
+                        }
+                    }
+                    
+                    if (parsedCategories.length > 0) {
+                        tagOptions.category = parsedCategories;
+                        console.log('Parsed categories:', tagOptions.category);
+                    }
+                } else {
+                    console.warn('카테고리 컨테이너를 찾을 수 없어 기본 카테고리를 사용합니다.');
+                    // 기본값 유지 (이미 위에서 비워두었으므로 기본값으로 채워줘야 함 - 만약 실패시)
+                    if (tagOptions.category.length === 0) {
+                         tagOptions.category = ['남자 아이돌', '여자 아이돌', '업보목록', '제이팝', '팝송', '인디/힙합'];
+                    }
+                }
+
                 try {
-                    // [FIX] 캡처 그룹이 3(배열)으로 변경되었습니다.
                     existingSongs = new Function(`return ${originalMatch[3]}`)();
                     
                     fileInfo.textContent = `✅ ${existingSongs.length}곡의 노래를 로드했습니다.`;
@@ -598,7 +688,6 @@
 
                     tagManagementSection.classList.remove('hidden');
                     editorSection.classList.remove('hidden');
-                    songListSection.classList.remove('hidden');
 
                     renderAllTagUIs();
                     renderFilterButtons();
@@ -741,10 +830,22 @@
 
             // --- 4. HTML 코드 생성 및 복사 버튼 ---
             generateBtn.addEventListener('click', async () => {
-                if (newSongs.length === 0) {
-                    showToast('추가된 노래가 없습니다.', true);
-                    return;
+                if (newSongs.length === 0 && !categoryContainerMatch) { // 카테고리 변경사항만 있을 수도 있으므로 조건 완화 필요하지만 일단 유지
+                     // 하지만 노래 추가 없이 순서만 바꿀 수도 있음.
+                     // 일단 newSongs 체크는 노래 추가 로직이므로 놔두고, 만약 순서 변경이 있으면 그것도 반영해야 함.
+                     // 현재 로직은 newSongs가 없으면 토스트 띄우고 리턴함.
+                     // 순서 변경만 했을 때도 생성하고 싶다면 이 조건을 수정해야 함.
+                     // 일단 사용자가 "노래를 추가할 때"라고 명시하진 않았지만, 보통 노래 추가 툴.
+                     // 하지만 "순서가 바뀌었을 경우에는... 반영하게 해줘"라고 했음.
+                     // 노래 추가 없이 순서만 바꿀 수도 있으니 체크 해제 혹은 category 변경 여부 체크.
+                     // 간단하게 newSongs.length === 0 체크를 제거하거나, 변경 여부를 추적해야 함.
+                     // 여기서는 그냥 노래가 없어도 생성 가능하게 하거나(데이터 갱신용), 
+                     // 아니면 기존 노래만이라도 다시 생성하게 함.
                 }
+                
+                // 노래 추가가 없어도 카테고리 순서 변경 반영을 위해 생성 가능하도록 수정
+                // if (newSongs.length === 0) ... -> 삭제 또는 경고만?
+                // 그냥 진행.
 
                 generateBtn.disabled = true;
                 generateBtn.textContent = '생성 중...';
@@ -753,7 +854,7 @@
                     const allSongs = [...existingSongs, ...newSongs];
 
                     // [FIX] originalMatch[1]은 이제 들여쓰기입니다.
-                    const indent = originalMatch[1]; 
+                    const indent = originalMatch ? originalMatch[1] : '    '; 
                     
                     const newArrayString = JSON.stringify(allSongs, null, 4);
                     const indentedArrayString = newArrayString.split('\n').map((line, index) => {
@@ -764,10 +865,60 @@
                     // [FIX] originalMatch[2]는 'const' | 'let' | 'var'입니다.
                     const newArrayDeclaration = `${indent}${originalMatch[2]} allSongsData = ${indentedArrayString};`;
                     
-                    const updatedHtmlContent = originalHtmlText.replace(
+                    let updatedHtmlContent = originalHtmlText.replace(
                         originalMatch[0], 
                         newArrayDeclaration
                     );
+
+                    // --- 카테고리 순서 반영 ---
+                    if (categoryContainerMatch) {
+                        // 새 카테고리 HTML 생성
+                        // 1. 전체 (고정)
+                        // 2. tagOptions.category 순서대로
+                        
+                        // 들여쓰기 추측 (기본 16칸 or 12칸?)
+                        const catIndent = '                '; 
+                        
+                        let newCategoryHtmlLines = [];
+                        
+                        // 전체 버튼
+                        newCategoryHtmlLines.push(`${catIndent}<button data-category="All" class="category-btn bg-blue-500 text-white font-semibold py-2 px-6 rounded-full transition-colors hover:bg-blue-600">`);
+                        newCategoryHtmlLines.push(`${catIndent}    전체`);
+                        newCategoryHtmlLines.push(`${catIndent}</button>`);
+                        
+                        tagOptions.category.forEach(cat => {
+                            let btnClass = 'category-btn bg-gray-700 text-gray-200 font-semibold py-2 px-6 rounded-full transition-colors hover:bg-gray-600';
+                            if (cat === '업보목록') {
+                                btnClass = 'category-btn bg-orange-700 text-gray-200 font-semibold py-2 px-6 rounded-full transition-colors hover:bg-orange-600';
+                            }
+                            
+                            newCategoryHtmlLines.push(`${catIndent}<button data-category="${cat}" class="${btnClass}">`);
+                            newCategoryHtmlLines.push(`${catIndent}    ${cat}`);
+                            newCategoryHtmlLines.push(`${catIndent}</button>`);
+                        });
+                        
+                        const newCategoryInnerHtml = '\n' + newCategoryHtmlLines.join('\n') + '\n            '; // 닫는 태그 앞 들여쓰기
+
+                        // 기존 컨테이너 내부를 교체하는 것이 아니라, 컨테이너 전체 매칭에서 내부 그룹만 교체하거나
+                        // categoryContainerMatch[0]은 전체 div, [1]은 내부.
+                        // originalHtmlText에서 categoryContainerMatch[1] (내부 내용)을 replace.
+                        // 하지만 내부 내용이 유니크하지 않을 수 있음.
+                        // categoryContainerMatch[0]을 사용하여 replace하는 것이 안전.
+                        
+                        // categoryContainerMatch[0] = <div ...> ... </div>
+                        // 앞부분 태그와 뒷부분 태그를 유지하고 내용만 교체
+                        
+                        const containerTagOpenRegex = /<div[^>]*class="[^"]*flex flex-wrap justify-center gap-1 sm:gap-2[^"]*"[^>]*>/i;
+                        const openTagMatch = categoryContainerMatch[0].match(containerTagOpenRegex);
+                        
+                        if (openTagMatch) {
+                            const openTag = openTagMatch[0];
+                            const closeTag = '</div>';
+                            const newCategorySection = `${openTag}${newCategoryInnerHtml}${closeTag}`;
+                            
+                            updatedHtmlContent = updatedHtmlContent.replace(categoryContainerMatch[0], newCategorySection);
+                        }
+                    }
 
                     const tempTextarea = document.createElement('textarea');
                     tempTextarea.value = updatedHtmlContent;
@@ -792,11 +943,17 @@
                         copyMessage.textContent = '';
                     }, 2000);
 
+                    // 상태 업데이트 (노래만)
                     newSongs = [];
                     existingSongs = allSongs;
+                    // originalHtmlText 업데이트 (카테고리 변경사항 등 포함된 최신본으로)
                     originalHtmlText = updatedHtmlContent;
-                    originalMatch = originalHtmlText.match(songDataRegex);
                     
+                    // 매치 정보 갱신
+                    originalMatch = originalHtmlText.match(songDataRegex);
+                    const catMatch = originalHtmlText.match(/<div[^>]*class="[^"]*flex flex-wrap justify-center gap-1 sm:gap-2[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
+                    if (catMatch) categoryContainerMatch = catMatch;
+
                     filterAndRender();
                     
                     fileInfo.textContent = `✅ 코드 생성 및 복사 완료! (현재 ${existingSongs.length}곡)`;
