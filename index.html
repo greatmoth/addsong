@@ -207,6 +207,12 @@
                             <input type="text" id="song-bpm" data-key="bpm" class="song-input w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                         </div>
 
+                        <!-- 메모 -->
+                        <div class="md:col-span-2">
+                            <label for="song-memo" class="block text-sm font-medium text-gray-300 mb-1">메모</label>
+                            <input type="text" id="song-memo" data-key="memo" class="song-input w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="곡에 대한 간단한 메모를 입력하세요...">
+                        </div>
+
                         <!-- 카테고리 -->
                         <div>
                             <label for="song-category" class="block text-sm font-medium text-gray-300 mb-1">카테고리</label>
@@ -398,18 +404,21 @@
                     }
 
                     card.innerHTML = `
-                        <div class="flex items-baseline">
-                            <h3 class="text-lg font-semibold text-gray-50 truncate">${song.title}</h3>
-                            <p class="text-gray-400 text-sm truncate ml-2">${song.artist}</p>
-                        </div>
-                        <div class="flex items-center justify-between mt-1">
-                            <div class="flex space-x-2 overflow-x-auto">
-                                ${tagsHtml}
+                        <div class="flex items-baseline justify-between">
+                            <div class="flex items-baseline overflow-hidden">
+                                <h3 class="text-lg font-semibold text-gray-50 truncate">${song.title}</h3>
+                                <p class="text-gray-400 text-sm truncate ml-2">${song.artist}</p>
                             </div>
                             <div class="flex space-x-2 text-gray-500 text-xs flex-shrink-0 ml-2">
                                 <span>Key: ${song.key || '?'}</span>
                                 <span>BPM: ${song.bpm || '?'}</span>
                             </div>
+                        </div>
+                        <div class="mt-2 flex items-center justify-between">
+                            <div class="flex space-x-2 overflow-x-auto">
+                                ${tagsHtml}
+                            </div>
+                            ${song.memo ? `<p class="text-gray-400 text-sm px-2 py-1 rounded-md whitespace-nowrap ml-2">${song.memo}</p>` : ''}
                         </div>
                     `;
                     
@@ -663,7 +672,7 @@
                 const newSong = {};
                 let isValid = true;
                 
-                const songKeys = ['title', 'artist', 'key', 'bpm', 'category', 'difficulty', 'cheeseTag', 'upboType'];
+                const songKeys = ['title', 'artist', 'key', 'bpm', 'memo', 'category', 'difficulty', 'cheeseTag', 'upboType'];
                 songKeys.forEach(key => {
                     const inputEl = songForm.querySelector(`[data-key="${key}"]`);
                     if (inputEl) {
@@ -685,12 +694,13 @@
                 if (newSong.difficulty === null) delete newSong.difficulty;
                 if (newSong.cheeseTag === null) delete newSong.cheeseTag;
                 if (newSong.upboType === null) delete newSong.upboType;
+                if (newSong.memo === null) delete newSong.memo;
                 if (newSong.key === null) newSong.key = '?';
                 if (newSong.bpm === null) newSong.bpm = '?';
 
                 newSongs.push(newSong);
                 
-                ['title', 'artist', 'key', 'bpm'].forEach(id => {
+                ['title', 'artist', 'key', 'bpm', 'memo'].forEach(id => {
                     document.getElementById(`song-${id}`).value = '';
                 });
                 ['category', 'difficulty', 'priceTag', 'upboType'].forEach(key => {
