@@ -337,6 +337,7 @@
             let categoryContainerMatch = null; // 카테고리 컨테이너 원본 매치 저장
             let currentCategory = '전체'; // 현재 선택된 필터 카테고리
             const PROTECTED_CATEGORY = '업보목록'; // 보호된 카테고리 (기능적으로만 보호, 순서는 사용자 지정)
+            let isListModified = false; // 목록 변경 여부 (삭제 등)
 
             // 태그 옵션 상태
             let tagOptions = {
@@ -385,6 +386,29 @@
             }
 
             /**
+             * 노래 목록에서 특정 노래를 삭제합니다.
+             * @param {Object} songToDelete - 삭제할 노래 객체
+             */
+            function deleteSong(songToDelete) {
+                // newSongs에서 찾기
+                const newIndex = newSongs.indexOf(songToDelete);
+                if (newIndex > -1) {
+                    newSongs.splice(newIndex, 1);
+                } else {
+                    // existingSongs에서 찾기
+                    const existingIndex = existingSongs.indexOf(songToDelete);
+                    if (existingIndex > -1) {
+                        existingSongs.splice(existingIndex, 1);
+                    }
+                }
+                
+                isListModified = true;
+                filterAndRender();
+                checkGenerateButtonState();
+                showToast('노래가 삭제되었습니다.');
+            }
+
+            /**
              * 노래 목록을 카드 형태로 렌더링합니다.
              * @param {Array} songsToRender - 렌더링할 노래 객체 배열
              */
@@ -397,7 +421,8 @@
                 
                 songsToRender.forEach(song => {
                     const card = document.createElement('div');
-                    card.className = 'bg-gray-700 p-4 rounded-xl shadow-md transform card-hover-scale transition-transform duration-300 cursor-pointer';
+                    // relative 추가 (삭제 버튼 배치를 위해)
+                    card.className = 'relative bg-gray-700 p-4 rounded-xl shadow-md transform card-hover-scale transition-transform duration-300 cursor-pointer';
                     
                     let tagsHtml = '';
                     if (song.category === PROTECTED_CATEGORY) {
@@ -412,8 +437,20 @@
                         `;
                     }
 
+                    // 삭제 버튼 추가
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.innerHTML = '&times;';
+                    deleteBtn.className = 'absolute top-2 right-2 text-gray-400 hover:text-red-500 font-bold text-xl leading-none z-20 p-1';
+                    deleteBtn.title = '삭제';
+                    deleteBtn.onclick = (e) => {
+                        e.stopPropagation(); // 카드 클릭 이벤트 방지
+                        if (confirm(`'${song.title}' 노래를 목록에서 삭제하시겠습니까?`)) {
+                            deleteSong(song);
+                        }
+                    };
+
                     card.innerHTML = `
-                        <div class="flex items-baseline justify-between">
+                        <div class="flex items-baseline justify-between pr-6"> <!-- pr-6 for delete button space -->
                             <div class="flex items-baseline overflow-hidden">
                                 <h3 class="text-lg font-semibold text-gray-50 truncate">${song.title}</h3>
                                 <p class="text-gray-400 text-sm truncate ml-2">${song.artist}</p>
@@ -430,6 +467,8 @@
                             ${song.memo ? `<p class="text-gray-400 text-sm px-2 py-1 rounded-md whitespace-nowrap ml-2">${song.memo}</p>` : ''}
                         </div>
                     `;
+                    
+                    card.appendChild(deleteBtn);
                     
                     // '업보목록'이 아닌 경우에만 복사 이벤트 리스너 추가
                     if (song.category !== PROTECTED_CATEGORY) {
@@ -582,6 +621,13 @@
                 if (currentCategory !== '전체') {
                     filteredSongs = allSongs.filter(song => song.category === currentCategory);
                 }
+
+                // [추가] 가수 이름(artist) 기준 사전 순 정렬
+                filteredSongs.sort((a, b) => {
+                    const artistA = a.artist || '';
+                    const artistB = b.artist || '';
+                    return artistA.localeCompare(artistB, 'ko');
+                });
 
                 renderSongs(filteredSongs);
             }
@@ -830,23 +876,11 @@
 
             // --- 4. HTML 코드 생성 및 복사 버튼 ---
             generateBtn.addEventListener('click', async () => {
-                if (newSongs.length === 0 && !categoryContainerMatch) { // 카테고리 변경사항만 있을 수도 있으므로 조건 완화 필요하지만 일단 유지
-                     // 하지만 노래 추가 없이 순서만 바꿀 수도 있음.
-                     // 일단 newSongs 체크는 노래 추가 로직이므로 놔두고, 만약 순서 변경이 있으면 그것도 반영해야 함.
-                     // 현재 로직은 newSongs가 없으면 토스트 띄우고 리턴함.
-                     // 순서 변경만 했을 때도 생성하고 싶다면 이 조건을 수정해야 함.
-                     // 일단 사용자가 "노래를 추가할 때"라고 명시하진 않았지만, 보통 노래 추가 툴.
-                     // 하지만 "순서가 바뀌었을 경우에는... 반영하게 해줘"라고 했음.
-                     // 노래 추가 없이 순서만 바꿀 수도 있으니 체크 해제 혹은 category 변경 여부 체크.
-                     // 간단하게 newSongs.length === 0 체크를 제거하거나, 변경 여부를 추적해야 함.
-                     // 여기서는 그냥 노래가 없어도 생성 가능하게 하거나(데이터 갱신용), 
-                     // 아니면 기존 노래만이라도 다시 생성하게 함.
+                if (newSongs.length === 0 && !categoryContainerMatch && !isListModified) { 
+                     // 변경사항이 없으면 리턴 (카테고리 변경, 노래 추가, 노래 삭제 모두 없을 경우)
+                     return;
                 }
                 
-                // 노래 추가가 없어도 카테고리 순서 변경 반영을 위해 생성 가능하도록 수정
-                // if (newSongs.length === 0) ... -> 삭제 또는 경고만?
-                // 그냥 진행.
-
                 generateBtn.disabled = true;
                 generateBtn.textContent = '생성 중...';
 
@@ -989,9 +1023,13 @@
 
             // --- 생성 버튼 활성화/비활성화 ---
             function checkGenerateButtonState() {
-                if (newSongs.length > 0) {
+                if (newSongs.length > 0 || isListModified) {
                     generateBtn.classList.remove('hidden');
-                    generateBtn.textContent = `HTML 코드 생성 및 복사 (${newSongs.length}곡 추가)`;
+                    if (newSongs.length > 0) {
+                        generateBtn.textContent = `HTML 코드 생성 및 복사 (${newSongs.length}곡 추가)`;
+                    } else {
+                        generateBtn.textContent = 'HTML 코드 생성 및 복사 (변경사항 있음)';
+                    }
                 } else {
                     generateBtn.classList.add('hidden');
                     generateBtn.textContent = 'HTML 코드 생성 및 복사';
